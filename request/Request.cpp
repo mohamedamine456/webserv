@@ -38,10 +38,19 @@ void		Request::setMethod ( std::string &firstLine ) {
 }
 
 void		Request::setPath ( std::string &firstLine ) {
+	if (firstLine.find("http://") != std::string::npos && firstLine.find("http://") == 0) {
+		firstLine.erase(0, 7);
+		std::string	tmpHost = firstLine.substr(0, firstLine.find("/"));
+		firstLine.erase(0, firstLine.find("/"));
+		this->setHost(tmpHost);
+	}
 	if (firstLine.find(' ') != std::string::npos) {
 		this->path = firstLine.substr(0, firstLine.find(' '));
 		// test for supported methods
 		firstLine.erase(0, firstLine.find(' ') + 1);
+	}
+	if (this->path[0] != '/') {
+		this->path = "/" + this->path;
 	}
 	else {
 		this->error = true;
@@ -62,7 +71,14 @@ void		Request::setVersion ( std::string &firstLine ) {
 }
 
 void		Request::setHost ( std::string &hostString ) {
-
+	if (hostString.find(':') != std::string::npos) {
+		std::string tmpPort = hostString.substr(hostString.find(':') + 1);
+		this->setPort(tmpPort);
+		this->host = hostString.substr(0, hostString.find(':'));
+	}
+	else {
+		this->host = hostString;
+	}
 }
 
 void		Request::setPort ( std::string  &portString ) {
