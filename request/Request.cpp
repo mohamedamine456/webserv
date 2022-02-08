@@ -78,11 +78,17 @@ void		Request::setHost ( std::string &hostString ) {
 	}
 	else {
 		this->host = hostString;
+		this->setPort("");
 	}
 }
 
-void		Request::setPort ( std::string  &portString ) {
-
+void		Request::setPort ( std::string  portString ) {
+	if (portString != "") {
+		this->port = std::stoi(portString);
+	}
+	else {
+		this->port = 80;
+	}
 }
 
 void		Request::setHeaders ( std::vector<std::string> &headers ) {
@@ -103,6 +109,14 @@ std::string		Request::getPath () {
 
 std::string		Request::getVersion () {
 	return this->version;
+}
+
+std::string		Request::getHost () {
+	return this->host;
+}
+
+int				Request::getPort () {
+	return this->port;
 }
 
 // std::vector<std::pair<std::string, std::string> >	Request::splitRequest( std::string request ) {

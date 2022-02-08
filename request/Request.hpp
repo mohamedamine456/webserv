@@ -33,7 +33,7 @@ class Request {
 		void						setQuery ( std::string &firstLine );
 		void						setVersion ( std::string &firstLine );
 		void						setHost ( std::string &hostString );
-		void						setPort ( std::string  &portString );
+		void						setPort ( std::string  portString );
 		void						setHeaders ( std::vector<std::string> &headers );
 		void						setBody ( std::vector <std::string> &body );
 		
