@@ -7,12 +7,12 @@
 #include <iostream>
 #include <unistd.h>
 
-#define PORT 8080
+#define PORT 8000
 
 int main() {
     int     sockfd, new_sockfd, recv_length, sent_size, size_left = 0;
     struct  sockaddr_in address;
-    struct  sockaddr_storage conn_address;
+    struct  sockaddr_in conn_address;
     char    buffer[1024];
 
     sockfd = sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -45,19 +45,19 @@ int main() {
             std::cerr << "Accepting Connection Failed!" << std::endl;
             exit(EXIT_FAILURE);
         }
-
-        char *str_send = (char *)"HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 18\n\nHello From Server!\n";
-        sent_size = send(new_sockfd, str_send, strlen(str_send), 0);
-        while (sent_size < strlen(str_send)) {
-            size_left += sent_size;
-            sent_size = send(new_sockfd, str_send + size_left, strlen(str_send), 0);
-        }
         
         recv_length = recv(new_sockfd, &buffer, 1024, 0);
-        while (recv_length) {
-            std::cout << "Received:" << std::endl << buffer << "Bytes: " << recv_length << std::endl;
+        std::cout << "Received:" << std::endl << buffer << "Bytes: " << recv_length << std::endl;
+        while (recv_length == 1024) {
             recv_length = recv(new_sockfd, &buffer, 1024, 0);
+            std::cout << "Received:" << std::endl << buffer << "Bytes: " << recv_length << std::endl;
         }
+        char *str_send = (char *)"HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
+        sent_size = send(new_sockfd, str_send, strlen(str_send), 0);
+        // while (sent_size < strlen(str_send)) {
+        //     size_left += sent_size;
+        //     sent_size = send(new_sockfd, str_send + size_left, strlen(str_send), 0);
+        // }
         close(new_sockfd);
     }
     return (0);
