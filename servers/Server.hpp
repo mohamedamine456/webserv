@@ -15,7 +15,10 @@ class Server {
 		int					acceptFd;
 		struct sockaddr_in	serverAddress;
 		struct sockaddr_in	connAddress;
-		std::string			buffer;
+		char				buffer[1024];
+	public:
+		Server();
+		~Server();
 };
 
 #endif
