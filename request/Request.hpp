@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <fstream>
 
 class Request {
     private:
@@ -15,7 +16,7 @@ class Request {
 		std::string										host;
 		int												port;
         std::vector<string_pair>						headers;
-		std::string										body;
+		std::ifstream									body;
 		bool											error;
 
 		// private methods
@@ -45,7 +46,7 @@ class Request {
 		std::string					getHost ();
 		int							getPort ();
 		std::vector<string_pair>	getHeaders ();
-		std::string					getBody ();
+		std::ifstream				getBody ();
 };
 
 #endif

@@ -16,7 +16,7 @@ Request	&Request::operator= ( const Request &rqst ) {
 	this->host = rqst.host;
 	this->port = rqst.port;
 	this->headers = rqst.headers;
-	this->body = rqst.body;
+	// this->body = rqst.body;
 	this->error = rqst.error;
 
 	return *this;
