@@ -7,7 +7,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#define PORT 8000
+#define PORT 8080
 
 int main() {
     int     sockfd, new_sockfd, recv_length, sent_size, size_left = 0;
@@ -47,11 +47,14 @@ int main() {
         }
         
         recv_length = recv(new_sockfd, &buffer, 1024, 0);
-        std::cout << "Received:" << std::endl << buffer << "Bytes: " << recv_length << std::endl;
+        std::cout << "Received:" << std::endl;
         while (recv_length == 1024) {
+            std::cout << buffer << "|" << recv_length << "|";
             recv_length = recv(new_sockfd, &buffer, 1024, 0);
-            std::cout << "Received:" << std::endl << buffer << "Bytes: " << recv_length << std::endl;
         }
+        buffer[recv_length] = '\0';
+        std::cout << buffer;
+        std::cout << std::endl;
         char *str_send = (char *)"HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
         sent_size = send(new_sockfd, str_send, strlen(str_send), 0);
         // while (sent_size < strlen(str_send)) {
