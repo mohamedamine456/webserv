@@ -17,7 +17,7 @@ int main() {
     struct  sockaddr_in conn_address;
     char    buffer[1024];
 
-    sockfd = sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd <= 0) {
         std::cerr << "Create Socket Failed!" << std::endl;
         exit(EXIT_FAILURE);
