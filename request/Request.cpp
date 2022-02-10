@@ -95,8 +95,13 @@ void		Request::setHeaders ( std::vector<std::string> &headers ) {
 
 }
 
-void		Request::setBody ( std::vector <std::string> &body ) {
+void		Request::setRequestfile ( std::string filename ) {
+	this->requestfile.first = filename;
+	this->requestfile.second.open(this->requestfile.first);
+}
 
+void		Request::writeToRFile( std::string part ) {
+	this->requestfile.second << part;
 }
 
 std::string		Request::getMethod () {
@@ -118,6 +123,10 @@ std::string		Request::getHost () {
 int				Request::getPort () {
 	return this->port;
 }
+
+// std::pair< std::string, std::ofstream & >		Request::getRequestfile () {
+// 	return this->requestfile;
+// }
 
 // std::vector<std::pair<std::string, std::string> >	Request::splitRequest( std::string request ) {
 	

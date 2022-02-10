@@ -10,7 +10,7 @@
 #include <cstdio>
 #include "request/Request.hpp"
 
-std::string getfilename() {
+std::string getfilename(std::string str) {
 	static int a = 1;
 	time_t ttime = std::time(0);
 	std::string filename(std::to_string(ttime));
@@ -30,17 +30,16 @@ Request	read_request(int &newSockfd) {
 	Request				rqst;
 	int					recvLength = 1024;								// length received in request
 	char				buffer[1024];									// request reading buffer
-	std::string			filename = "/var/tmp/" + getfilename();
-	std::ofstream		file(filename, std::ifstream::out);
+	rqst.setRequestfile("/var/tmp/" + getfilename(""));
+	// std::ofstream		requestFile(requestFilename, std::ofstream::out);
 	std::cout << "Receiving:" << std::endl;
 	while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {
 		buffer[recvLength] = '\0';
-		file << buffer;
+		rqst.writeToRFile(buffer);
 	}
 	buffer[recvLength] = '\0';
-	file << buffer;
-	file << std::endl;
-	
+	rqst.writeToRFile(buffer);
+	// requestFile << std::endl;
 	return rqst;
 }
 
@@ -91,7 +90,7 @@ int main (int argc, char **argv) {
 				std::cerr << "Accepting Connection Failed!" << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			Request rqst = read_request(newSockfd);									// read request
+			Request rqst = read_request(newSockfd);						// read request
 			send_simple_response(newSockfd);							// to prevent multi request from mozilla
 			// remove(filename.c_str());
 			std::cout << "End Reading!" << std::endl;

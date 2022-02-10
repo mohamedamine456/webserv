@@ -37,7 +37,9 @@ class Request {
 		void											setHost ( std::string &hostString );
 		void											setPort ( std::string  portString );
 		void											setHeaders ( std::vector<std::string> &headers );
-		void											setBody ( std::vector <std::string> &body );
+		void											setRequestfile ( std::string filename );
+		void											writeToRFile( std::string part );
+		// void											setBodyfile ( std::string filename, std::ofstream file );
 		
 		// Getters
 		std::string										getMethod ();
@@ -47,7 +49,7 @@ class Request {
 		std::string										getHost ();
 		int												getPort ();
 		std::vector<string_pair>						getHeaders ();
-		std::pair< std::string, std::ofstream >			getBody ();
+		std::pair< std::string, std::ofstream >			getBodyfile ();
 };
 
 #endif
