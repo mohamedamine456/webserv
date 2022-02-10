@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <cstdio>
+#include "request/Request.hpp"
 
 std::string getfilename() {
 	static int a = 1;
@@ -18,6 +19,37 @@ std::string getfilename() {
 	return (filename);
 }
 
+void	initialize_address(struct sockaddr_in &address, char *port) {
+	memset((char *)&address, 0, sizeof(address));
+	address.sin_family = AF_UNSPEC;
+	address.sin_addr.s_addr = htonl(INADDR_ANY);
+	address.sin_port = htons(std::stoi(port));
+}
+
+Request	read_request(int &newSockfd) {
+	Request				rqst;
+	int					recvLength = 1024;								// length received in request
+	char				buffer[1024];									// request reading buffer
+	std::string			filename = "/var/tmp/" + getfilename();
+	std::ofstream		file(filename, std::ifstream::out);
+	std::cout << "Receiving:" << std::endl;
+	while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {
+		buffer[recvLength] = '\0';
+		file << buffer;
+	}
+	buffer[recvLength] = '\0';
+	file << buffer;
+	file << std::endl;
+	
+	return rqst;
+}
+
+void	send_simple_response(int &newSockfd)
+{
+	std::string str_send = "HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
+	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
+}
+
 int main (int argc, char **argv) {
 	if (argc != 2) {
 		std::cerr << "Usage: " << argv[0] << " [PORT]" << std::endl;
@@ -26,10 +58,9 @@ int main (int argc, char **argv) {
 	else {
 		int					sockfd;											// server socket FD
 		int					newSockfd;										// new connection FD
-		int					recvLength = 1024;								// length received in request
 		struct sockaddr_in	address;										// server configuration
 		struct sockaddr_in	connAddress;									// new connection configuration
-		char				buffer[1024];									// request reading buffer
+		
 		// creation of socket
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd <= 0) {
@@ -37,17 +68,15 @@ int main (int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		// fill address with zeros
-		memset((char *)&address, 0, sizeof(address));
-		address.sin_family = AF_UNSPEC;
-		address.sin_addr.s_addr = htonl(INADDR_ANY);
-		address.sin_port = htons(std::stoi(argv[1]));
+		// initialize address
+		initialize_address(address, argv[1]);
 
 		if (bind(sockfd, (struct sockaddr *)&address, sizeof(address)) == -1) {
 			std::cerr << "Bind Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
+		// listen on socket
 		if (listen(sockfd, 5) < 0) {
 			std::cerr << "Listen Failed!" << std::endl;
 			exit(EXIT_FAILURE);
@@ -58,24 +87,12 @@ int main (int argc, char **argv) {
 
 			socklen_t stor_size = sizeof(struct sockaddr_in);
 			newSockfd = accept(sockfd, (struct sockaddr *)&connAddress, &stor_size);
-
 			if (newSockfd < 0) {
 				std::cerr << "Accepting Connection Failed!" << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			std::string			filename = "/var/tmp/" + getfilename();
-			std::ofstream		file(filename, std::ifstream::out);
-			std::cout << "Receiving:" << std::endl;
-			while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {
-				buffer[recvLength] = '\0';
-				file << buffer;
-			}
-			buffer[recvLength] = '\0';
-			file << buffer;
-			file << std::endl;
-			sleep(3);
-			std::string str_send = "HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
-			send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
+			Request rqst = read_request(newSockfd);									// read request
+			send_simple_response(newSockfd);							// to prevent multi request from mozilla
 			// remove(filename.c_str());
 			std::cout << "End Reading!" << std::endl;
 			close(newSockfd);
