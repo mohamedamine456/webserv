@@ -16,8 +16,8 @@ class Request {
 		std::string										host;
 		int												port;
         std::vector<string_pair>						headers;
-		std::pair< std::string, std::ofstream >			requestfile;
-		std::pair< std::string, std::ofstream >			bodyfile;
+		std::string										requestfile;
+		std::string										bodyfile;
 		bool											error;
 
 		// private methods
@@ -38,7 +38,6 @@ class Request {
 		void											setPort ( std::string  portString );
 		void											setHeaders ( std::vector<std::string> &headers );
 		void											setRequestfile ( std::string filename );
-		void											writeToRFile( std::string part );
 		// void											setBodyfile ( std::string filename, std::ofstream file );
 		
 		// Getters
@@ -49,7 +48,8 @@ class Request {
 		std::string										getHost ();
 		int												getPort ();
 		std::vector<string_pair>						getHeaders ();
-		std::pair< std::string, std::ofstream >			getBodyfile ();
+		std::string										getRequestfile ();
+		std::string										getBodyfile ();
 };
 
 #endif
