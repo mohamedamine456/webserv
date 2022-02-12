@@ -16,7 +16,6 @@ Request	&Request::operator= ( const Request &rqst ) {
 	this->host = rqst.host;
 	this->port = rqst.port;
 	this->headers = rqst.headers;
-	// this->body = rqst.body;
 	this->error = rqst.error;
 
 	return *this;
@@ -91,13 +90,21 @@ void		Request::setPort ( std::string  portString ) {
 	}
 }
 
-void		Request::setHeaders ( std::vector<std::string> &headers ) {
-
+void		Request::addHeader ( std::string header ) {
+	std::string key = header.substr(0, header.find(":"));
+	std::string value = header.substr(header.find(":") + 1);
+	this->headers.push_back(std::make_pair(key, value));
 }
 
 void		Request::setRequestfile ( std::string filename ) {
-	this->requestfile = filename;
+	this->requestfilename = filename;
 }
+
+void		Request::setBodyfile ( std::string filename ) {
+	this->requestfilename = filename;
+}
+
+
 
 std::string		Request::getMethod () {
 	return this->method;
@@ -120,7 +127,11 @@ int				Request::getPort () {
 }
 
 std::string		Request::getRequestfile () {
-	return this->requestfile;
+	return this->requestfilename;
+}
+
+std::string		Request::getBodyfile () {
+	return this->bodyfilename;
 }
 
 // std::pair< std::string, std::ofstream & >		Request::getRequestfile () {

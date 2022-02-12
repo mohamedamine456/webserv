@@ -16,8 +16,8 @@ class Request {
 		std::string										host;
 		int												port;
         std::vector<string_pair>						headers;
-		std::string										requestfile;
-		std::string										bodyfile;
+		std::string										requestfilename;
+		std::string										bodyfilename;
 		bool											error;
 
 		// private methods
@@ -36,9 +36,10 @@ class Request {
 		void											setVersion ( std::string &firstLine );
 		void											setHost ( std::string &hostString );
 		void											setPort ( std::string  portString );
-		void											setHeaders ( std::vector<std::string> &headers );
+		void											addHeader ( std::string header );
+		// void											setHeaders ( std::vector<std::string> &headers );
 		void											setRequestfile ( std::string filename );
-		// void											setBodyfile ( std::string filename, std::ofstream file );
+		void											setBodyfile ( std::string filename );
 		
 		// Getters
 		std::string										getMethod ();
