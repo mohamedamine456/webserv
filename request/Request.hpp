@@ -16,7 +16,6 @@ class Request {
 		std::string										host;
 		int												port;
         std::vector<string_pair>						headers;
-		std::string										requestfilename;
 		std::string										bodyfilename;
 		bool											error;
 
@@ -38,7 +37,6 @@ class Request {
 		void											setPort ( std::string  portString );
 		void											addHeader ( std::string header );
 		// void											setHeaders ( std::vector<std::string> &headers );
-		void											setRequestfile ( std::string filename );
 		void											setBodyfile ( std::string filename );
 		
 		// Getters
@@ -49,7 +47,6 @@ class Request {
 		std::string										getHost ();
 		int												getPort ();
 		std::vector<string_pair>						getHeaders ();
-		std::string										getRequestfile ();
 		std::string										getBodyfile ();
 };
 

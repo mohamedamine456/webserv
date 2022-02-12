@@ -96,12 +96,8 @@ void		Request::addHeader ( std::string header ) {
 	this->headers.push_back(std::make_pair(key, value));
 }
 
-void		Request::setRequestfile ( std::string filename ) {
-	this->requestfilename = filename;
-}
-
 void		Request::setBodyfile ( std::string filename ) {
-	this->requestfilename = filename;
+	this->bodyfilename = filename;
 }
 
 
@@ -124,10 +120,6 @@ std::string		Request::getHost () {
 
 int				Request::getPort () {
 	return this->port;
-}
-
-std::string		Request::getRequestfile () {
-	return this->requestfilename;
 }
 
 std::string		Request::getBodyfile () {
