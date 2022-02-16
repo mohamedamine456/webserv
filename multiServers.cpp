@@ -39,7 +39,8 @@ Request	read_request(int &newSockfd) {
 	Request				rqst;
 	int					recvLength = 1024;								// length received in request
 	char				buffer[1024];									// request reading buffer
-	std::ofstream		rqstFile("/var/tmp/request_" + getfilename(""), std::ofstream::out);
+	std::string			filename = "/var/tmp/request_" + getfilename("");
+	std::ofstream		rqstFile(filename, std::ofstream::out);
 	std::cout << "Receiving:" << std::endl;
 	while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {
 		buffer[recvLength] = '\0';
@@ -48,6 +49,7 @@ Request	read_request(int &newSockfd) {
 	buffer[recvLength] = '\0';
 	rqstFile << buffer;
 	std::cout << rqstFile << "\n";
+	remove(filename.c_str());
 	return rqst;
 }
 
@@ -73,10 +75,10 @@ void	send_simple_response(int &newSockfd)
 
 int main () {
 
-	int					sockfd, sockfd2;											// server socket FD
-	int					newSockfd, newSockfd2;										// new connection FD
-	struct sockaddr_in	address, address2;										// server configuration
-	struct sockaddr_in	connAddress, connAddress2;
+	int					sockfd;											// server socket FD
+	int					newSockfd;										// new connection FD
+	struct sockaddr_in	address;										// server configuration
+	struct sockaddr_in	connAddress;
 	
 	// creation of socket
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -85,83 +87,47 @@ int main () {
 		exit(EXIT_FAILURE);
 	}
 
-	sockfd2 = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd2 <= 0) {
-		std::cerr << "Socket Creation Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
 	// initialize address
 	initialize_address(address, 8080);
-	initialize_address(address2, 8000);
 
-	// if (bind(sockfd, (struct sockaddr *)&address, sizeof(address)) == -1) {
-	// 	std::cerr << "Bind Failed!" << std::endl;
-	// 	exit(EXIT_FAILURE);
-	// }
-
-	// if (bind(sockfd2, (struct sockaddr *)&address2, sizeof(address2)) == -1) {
-	// 	std::cerr << "Bind Failed!" << std::endl;
-	// 	exit(EXIT_FAILURE);
-	// }
+	if (bind(sockfd, (struct sockaddr *)&address, sizeof(address)) == -1) {
+		std::cerr << "Bind Failed!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	// listen on socket
 	if (listen(sockfd, 100) < 0) {
 		std::cerr << "Listen Failed!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	if (listen(sockfd2, 100) < 0) {
-		std::cerr << "Listen Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
 
-	// fd_set	current, backup;
-	// FD_ZERO(&current);
-	// FD_SET(sockfd, &current);
-	// FD_SET(sockfd2, &current);
+	fd_set	current, backup;
+	FD_ZERO(&current);
+	FD_SET(sockfd, &current);
 
 	while (true) {
-		// if (select(FD_SETSIZE, &current, NULL, NULL, NULL) < 0) {
-		// 	std::cerr << "Select Failed!" << std::endl;
-		// 	exit(EXIT_FAILURE);
-		// }
-
-		socklen_t stor_size = sizeof(struct sockaddr_in);
-		int newSockfd = accept(sockfd, (struct sockaddr *)&connAddress, &stor_size);
-		if (newSockfd < 0) {
-			std::cerr << "Accepting Connection Failed!" << std::endl;
+		if (select(FD_SETSIZE, &current, NULL, NULL, NULL) < 0) {
+			std::cerr << "Select Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		else {
-			send_simple_response(newSockfd);
-		}
 
-		int newSockfd2 = accept(sockfd2, (struct sockaddr *)&connAddress2, &stor_size);
-		if (newSockfd2 < 0) {
-			std::cerr << "Accepting Connection Failed!" << std::endl;
-			exit(EXIT_FAILURE);
+		for (int i = 0; i < FD_SETSIZE; i++) {
+			if (FD_ISSET(i, &current)) {
+				if (i == sockfd) {
+					socklen_t stor_size = sizeof(struct sockaddr_in);
+					int newSockfd = accept(i, (struct sockaddr *)&connAddress, &stor_size);
+					if (newSockfd < 0) {
+						std::cerr << "Accepting Connection Failed!" << std::endl;
+						exit(EXIT_FAILURE);
+					}
+					FD_SET(newSockfd, &current);
+				}
+				else {
+					Request rqst = read_request(i);
+					send_simple_response(i);
+					FD_CLR(i, &current);
+				}
+			}
 		}
-		else {
-			send_simple_response(newSockfd2);
-		}
-
-		// for (int i = 0; i < FD_SETSIZE; i++) {
-		// 	if (FD_ISSET(i, &current)) {
-		// 		if (i == sockfd) {
-		// 			socklen_t stor_size = sizeof(struct sockaddr_in);
-		// 			int newSockfd = accept(i, (struct sockaddr *)&connAddress, &stor_size);
-		// 			if (newSockfd < 0) {
-		// 				std::cerr << "Accepting Connection Failed!" << std::endl;
-		// 				exit(EXIT_FAILURE);
-		// 			}
-		// 			FD_SET(newSockfd, &current);
-		// 		}
-		// 		else {
-		// 			Request rqst = read_request(i);
-		// 			send_simple_response(i);
-		// 			FD_CLR(i, &current);
-		// 		}
-		// 	}
-		// }
 	}
 }
