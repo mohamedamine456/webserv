@@ -53,81 +53,95 @@ Request	read_request(int &newSockfd) {
 	return rqst;
 }
 
-server	setup_server() {
-	static int	port = 8080;
-	server	tmp;
-	tmp.sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (tmp.sockfd <= 0) {
-		std::cerr << "Socket Creation Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	initialize_address(tmp.address, port);
-	port += 10;
-	return tmp;
-}
-
 void	send_simple_response(int &newSockfd)
 {
 	std::string str_send = "HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
 	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
 }
 
-int main () {
-
-	int					sockfd;											// server socket FD
-	int					newSockfd;										// new connection FD
-	struct sockaddr_in	address;										// server configuration
-	struct sockaddr_in	connAddress;
-	
-	// creation of socket
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd <= 0) {
-		std::cerr << "Socket Creation Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	// initialize address
-	initialize_address(address, 8080);
-
-	if (bind(sockfd, (struct sockaddr *)&address, sizeof(address)) == -1) {
-		std::cerr << "Bind Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	// listen on socket
-	if (listen(sockfd, 100) < 0) {
-		std::cerr << "Listen Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	fd_set	current, backup;
-	FD_ZERO(&current);
-	FD_SET(sockfd, &current);
-
-	while (true) {
-		if (select(FD_SETSIZE, &current, NULL, NULL, NULL) < 0) {
-			std::cerr << "Select Failed!" << std::endl;
+std::vector<server>		create_multiple_servers()
+{
+	std::vector<server>		servers;
+	int						PORT = 5000;
+	for (int i = 0; i < 5; i++)
+	{
+		server	serv;
+		
+		// creation of socket
+		serv.sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		if (serv.sockfd <= 0) {
+			std::cerr << "Socket Creation Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
-		for (int i = 0; i < FD_SETSIZE; i++) {
-			if (FD_ISSET(i, &current)) {
-				if (i == sockfd) {
-					socklen_t stor_size = sizeof(struct sockaddr_in);
-					int newSockfd = accept(i, (struct sockaddr *)&connAddress, &stor_size);
-					if (newSockfd < 0) {
-						std::cerr << "Accepting Connection Failed!" << std::endl;
-						exit(EXIT_FAILURE);
-					}
-					FD_SET(newSockfd, &current);
-				}
-				else {
-					Request rqst = read_request(i);
-					send_simple_response(i);
-					FD_CLR(i, &current);
-				}
+		// initialize address
+		initialize_address(serv.address, PORT);
+
+		if (bind(serv.sockfd, (struct sockaddr *)&serv.address, sizeof(serv.address)) == -1) {
+			std::cerr << "Bind Failed!" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
+		// listen on socket
+		if (listen(serv.sockfd, 100) < 0) {
+			std::cerr << "Listen Failed!" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		PORT += 100;
+		servers.push_back(serv);
+	}
+	return servers;
+}
+
+int main () {
+	std::vector<server>	servers = create_multiple_servers();
+	int					sockfd;											// server socket FD
+	int					newSockfd;										// new connection FD										// server configuration
+	struct sockaddr_in	connAddress;
+	socklen_t stor_size = sizeof(struct sockaddr_in);
+
+
+	// for (std::vector<server>::iterator it = servers.begin(); it != servers.end(); it++) {
+	// 	std::cout << "Server listening on: " << ntohs((*it).address.sin_port) << "..." << std::endl;
+	// }
+
+	fd_set	rfds, rset;
+	int maxfd = -1, fd;
+	unsigned int i, status;
+	FD_ZERO(&rfds);
+	for (std::vector<server>::iterator it = servers.begin(); it != servers.end(); it++) {
+		FD_SET((*it).sockfd, &rfds);
+		if ((*it).sockfd > maxfd)
+			maxfd = (*it).sockfd;
+	}
+	while (true) {
+		rset = rfds;
+		status = select(maxfd + 1, &rset, NULL, NULL, NULL);
+		if (status < 0) {
+			std::cerr << "Select Failed!" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		fd = -1;
+		for (i = 0; i < servers.size(); i++) {
+			if (FD_ISSET(servers[i].sockfd, &rset)) {
+				fd = servers[i].sockfd;
+				break ;
 			}
+		}
+		if (fd == -1) {
+			std::cerr << "No Connection Failed!" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		else {
+			newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
+			if (newSockfd < 0) {
+				std::cerr << "Accepting Connection Failed!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			Request rqst = read_request(newSockfd);						// read request
+			send_simple_response(newSockfd);							// to prevent multi request from mozilla
+			std::cout << "End Reading!" << std::endl;
+			close(newSockfd);
 		}
 	}
 }
