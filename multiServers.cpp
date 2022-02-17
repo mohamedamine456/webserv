@@ -10,15 +10,10 @@
 #include <cstdio>
 #include <fcntl.h>
 #include "request/Request.hpp"
-#include "servers/Server.hpp"
+#include "servers/Socket.hpp"
 
 #define MAX_SERVERS 10
 #define PORT 8000
-
-struct  server {
-	int					sockfd;											// server socket FD
-	struct sockaddr_in	address;										// server configuration
-};
 
 std::string getfilename(std::string str) {
 	static int a = 1;
@@ -60,21 +55,21 @@ void	send_simple_response(int &newSockfd)
 	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
 }
 
-std::vector<Server>		create_multiple_servers()
+std::vector<Socket>		create_multiple_servers()
 {
-	std::vector<Server>		servers;
+	std::vector<Socket>		servers;
 	for (int i = 0; i < MAX_SERVERS; i++)
 	{
-		Server	serv;
+		Socket	serv;
 		
 		// creation of socket
-		if (serv.createServer() < 0) {
+		if (serv.createSocket() < 0) {
 			std::cerr << "Socket Creation Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
 		// initialize address
-		serv.setServerAddress(PORT + (i * 100));
+		serv.setSocketAddress(PORT + (i * 100));
 
 		if (serv.bindSocket() == -1) {
 			std::cerr << "Bind Failed!" << std::endl;
@@ -100,7 +95,7 @@ void	handle_request(int newSockfd)
 }
 
 int main () {
-	std::vector<Server>	servers = create_multiple_servers();
+	std::vector<Socket>	servers = create_multiple_servers();
 	int					sockfd;											// server socket FD
 	int					newSockfd;										// new connection FD										// server configuration
 	struct sockaddr_in	connAddress;
@@ -110,10 +105,10 @@ int main () {
 	int maxfd = -1, fd = -1;
 	unsigned int i, status;
 	FD_ZERO(&rfds);
-	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-		FD_SET((*it).getServerFd(), &rfds);
-		if ((*it).getServerFd() > maxfd)
-			maxfd = (*it).getServerFd();
+	for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
+		FD_SET((*it).getSocketFd(), &rfds);
+		if ((*it).getSocketFd() > maxfd)
+			maxfd = (*it).getSocketFd();
 	}
 	while (true) {
 		rset = rfds;
@@ -123,8 +118,8 @@ int main () {
 			exit(EXIT_FAILURE);
 		}
 		for (i = 0; i < servers.size(); i++) {
-			if (FD_ISSET(servers[i].getServerFd(), &rset)) {
-				fd = servers[i].getServerFd();
+			if (FD_ISSET(servers[i].getSocketFd(), &rset)) {
+				fd = servers[i].getSocketFd();
 				break ;
 			}
 		}
