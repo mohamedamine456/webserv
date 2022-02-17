@@ -36,7 +36,7 @@ void		Request::setMethod ( std::string &firstLine ) {
 	}
 }
 
-void		Request::setPath ( std::string &firstLine ) {
+void		Request::setPathFirstLine ( std::string &firstLine ) {
 	if (firstLine.find("http://") != std::string::npos && firstLine.find("http://") == 0) {
 		firstLine.erase(0, 7);
 		std::string	tmpHost = firstLine.substr(0, firstLine.find("/"));
@@ -54,6 +54,10 @@ void		Request::setPath ( std::string &firstLine ) {
 	else {
 		this->error = true;
 	}
+}
+
+void		Request::setPath () {
+	
 }
 
 void		Request::setQuery ( std::string &firstLine ) {

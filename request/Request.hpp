@@ -30,7 +30,8 @@ class Request {
 		// Setters
 		void											setRequest ( std::string &request );
 		void											setMethod ( std::string &firstLine );
-		void											setPath ( std::string &firstLine );
+		void											setPathFirstLine ( std::string &firstLine );
+		void											setPath ();
 		void											setQuery ( std::string &firstLine );
 		void											setVersion ( std::string &firstLine );
 		void											setHost ( std::string &hostString );
