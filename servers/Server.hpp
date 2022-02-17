@@ -8,17 +8,24 @@
 #include <netinet/in.h>
 #include <string>
 #include <iostream>
+#include <fcntl.h>
 
 class Server {
 	private:
 		int     			serverFd;
-		int					acceptFd;
 		struct sockaddr_in	serverAddress;
-		struct sockaddr_in	connAddress;
-		char				buffer[1024];
 	public:
 		Server();
 		~Server();
+
+		int		createServer ();
+		void	setServerAddress ( int port );
+		int		bindSocket () const;
+		int		listenSocket () const;
+
+		// Getters
+		int					getServerFd () const;
+		struct sockaddr_in	getServerAddress () const;
 };
 
 #endif

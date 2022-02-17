@@ -8,15 +8,16 @@
 #include <unistd.h>
 #include <fstream>
 #include <cstdio>
+#include <fcntl.h>
 #include "request/Request.hpp"
+#include "servers/Server.hpp"
 
-#define MAX_SERVERS 5
+#define MAX_SERVERS 10
+#define PORT 8000
 
 struct  server {
 	int					sockfd;											// server socket FD
-	int					newSockfd;										// new connection FD
 	struct sockaddr_in	address;										// server configuration
-	struct sockaddr_in	connAddress;									// new connection configuration
 };
 
 std::string getfilename(std::string str) {
@@ -48,7 +49,7 @@ Request	read_request(int &newSockfd) {
 	}
 	buffer[recvLength] = '\0';
 	rqstFile << buffer;
-	std::cout << rqstFile << "\n";
+	std::cout << filename << "\n";
 	remove(filename.c_str());
 	return rqst;
 }
@@ -59,60 +60,60 @@ void	send_simple_response(int &newSockfd)
 	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
 }
 
-std::vector<server>		create_multiple_servers()
+std::vector<Server>		create_multiple_servers()
 {
-	std::vector<server>		servers;
-	int						PORT = 5000;
-	for (int i = 0; i < 5; i++)
+	std::vector<Server>		servers;
+	for (int i = 0; i < MAX_SERVERS; i++)
 	{
-		server	serv;
+		Server	serv;
 		
 		// creation of socket
-		serv.sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (serv.sockfd <= 0) {
+		if (serv.createServer() < 0) {
 			std::cerr << "Socket Creation Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
 		// initialize address
-		initialize_address(serv.address, PORT);
+		serv.setServerAddress(PORT + (i * 100));
 
-		if (bind(serv.sockfd, (struct sockaddr *)&serv.address, sizeof(serv.address)) == -1) {
+		if (serv.bindSocket() == -1) {
 			std::cerr << "Bind Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
 		// listen on socket
-		if (listen(serv.sockfd, 100) < 0) {
+		if (serv.listenSocket() == -1) {
 			std::cerr << "Listen Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		PORT += 100;
 		servers.push_back(serv);
 	}
 	return servers;
 }
 
+void	handle_request(int newSockfd)
+{
+	Request rqst = read_request(newSockfd);						// read request
+	send_simple_response(newSockfd);							// to prevent multi request from mozilla
+	std::cout << "End Reading!" << std::endl;
+	close(newSockfd);
+}
+
 int main () {
-	std::vector<server>	servers = create_multiple_servers();
+	std::vector<Server>	servers = create_multiple_servers();
 	int					sockfd;											// server socket FD
 	int					newSockfd;										// new connection FD										// server configuration
 	struct sockaddr_in	connAddress;
 	socklen_t stor_size = sizeof(struct sockaddr_in);
 
-
-	// for (std::vector<server>::iterator it = servers.begin(); it != servers.end(); it++) {
-	// 	std::cout << "Server listening on: " << ntohs((*it).address.sin_port) << "..." << std::endl;
-	// }
-
 	fd_set	rfds, rset;
-	int maxfd = -1, fd;
+	int maxfd = -1, fd = -1;
 	unsigned int i, status;
 	FD_ZERO(&rfds);
-	for (std::vector<server>::iterator it = servers.begin(); it != servers.end(); it++) {
-		FD_SET((*it).sockfd, &rfds);
-		if ((*it).sockfd > maxfd)
-			maxfd = (*it).sockfd;
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+		FD_SET((*it).getServerFd(), &rfds);
+		if ((*it).getServerFd() > maxfd)
+			maxfd = (*it).getServerFd();
 	}
 	while (true) {
 		rset = rfds;
@@ -121,10 +122,9 @@ int main () {
 			std::cerr << "Select Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		fd = -1;
 		for (i = 0; i < servers.size(); i++) {
-			if (FD_ISSET(servers[i].sockfd, &rset)) {
-				fd = servers[i].sockfd;
+			if (FD_ISSET(servers[i].getServerFd(), &rset)) {
+				fd = servers[i].getServerFd();
 				break ;
 			}
 		}
@@ -138,10 +138,7 @@ int main () {
 				std::cerr << "Accepting Connection Failed!" << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			Request rqst = read_request(newSockfd);						// read request
-			send_simple_response(newSockfd);							// to prevent multi request from mozilla
-			std::cout << "End Reading!" << std::endl;
-			close(newSockfd);
+			handle_request(newSockfd);
 		}
 	}
 }
