@@ -20,15 +20,13 @@ class Request {
 		bool											error;
 
 		// private methods
-		// split request
-		std::vector<string_pair>						splitRequest( std::string request );
+		std::string										trimString( std::string str, char c );
 	public:
 		Request ();
 		Request ( const Request &rqst );
 		~Request ();
 		Request											&operator= ( const Request &rqst );
 		// Setters
-		void											setRequest ( std::string &request );
 		void											setMethod ( std::string &firstLine );
 		void											setPathFirstLine ( std::string &firstLine );
 		void											setPath ();
@@ -37,7 +35,7 @@ class Request {
 		void											setHost ( std::string &hostString );
 		void											setPort ( std::string  portString );
 		void											addHeader ( std::string header );
-		// void											setHeaders ( std::vector<std::string> &headers );
+		void											setHeaders ( std::vector<std::string> &headers );
 		void											setBodyfile ( std::string filename );
 		
 		// Getters

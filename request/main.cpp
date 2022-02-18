@@ -28,7 +28,7 @@ std::string	read_request(int newSockfd) {
 
 int main() {
 	Request rqst;
-	int							newSockfd = 3;
+	int							newSockfd = 3;		// should be connection socket fd
 	std::vector< std::string >	parts;
 	std::string					rqstFilename;
 	std::string					bodyFilename;
@@ -38,12 +38,18 @@ int main() {
 
 	rqstFilename = read_request(newSockfd);
 	requestFile.open(rqstFilename, std::ifstream::in);
+	if (requestFile.fail()) {
+		std::cerr << "Open File Failed!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	getline(requestFile, rqstLine);
-	
-	// handle the first line (you stopped here)
+	if (rqstLine.empty()) {
+		std::cerr << "Bad Request!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	while (getline(requestFile, rqstLine)) {
-		if (rqstLine == "\r") {
+		if (rqstLine == "") {
 			break ;
 		}
 		else {
@@ -53,6 +59,6 @@ int main() {
 	while (getline(requestFile, rqstLine)) {
 		bodyFile << rqstLine << std::endl;
 	}
-	rqst.setBodyfile("request_1Body.txt");
+	rqst.setBodyfile("");
 	return (0);
 }
