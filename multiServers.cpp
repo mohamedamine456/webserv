@@ -24,13 +24,6 @@ std::string getfilename(std::string str) {
 	return (filename);
 }
 
-void	initialize_address(struct sockaddr_in &address, int	port) {
-	memset((char *)&address, 0, sizeof(address));
-	address.sin_family = AF_UNSPEC;
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
-	address.sin_port = htons(port);
-}
-
 Request	read_request(int &newSockfd) {
 	Request				rqst;
 	int					recvLength = 1024;								// length received in request

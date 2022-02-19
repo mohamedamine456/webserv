@@ -15,18 +15,14 @@
 #include <fcntl.h>
 #define RECV_SIZE 4096
 
-std::string	read_request(int newSockfd) {
-	int					recvLength = RECV_SIZE;
-	char				buffer[RECV_SIZE];
-	std::string			filename = "/var/tmp/request_" + getfilename("");
-	std::ofstream		rqstFile(filename, std::ofstream::out);
-	while ((recvLength = recv(newSockfd, &buffer, RECV_SIZE, 0)) == RECV_SIZE) {
-		buffer[recvLength] = '\0';
-		rqstFile << buffer;
-	}
-	buffer[recvLength] = '\0';
-	rqstFile << buffer;
-	return (filename);
+struct RequestParse {
+	std::string	requestLine;
+	std::string	headers;
+};
+
+void	read_request(int newSockfd) {
+
+
 }
 
 void	send_simple_response(int &newSockfd)
@@ -37,7 +33,7 @@ void	send_simple_response(int &newSockfd)
 
 void	handle_request(int newSockfd)
 {
-	std::string rqst = read_request(newSockfd);						// read request
+	read_request(newSockfd);									// read request
 	send_simple_response(newSockfd);							// to prevent multi request from mozilla
 	std::cout << "End Reading!" << std::endl;
 	close(newSockfd);
