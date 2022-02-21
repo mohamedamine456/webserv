@@ -81,10 +81,11 @@ void	check_headers( RequestParse &parser ) {
 void	read_request(int newSockfd) {
 	RequestParse	parser;
 	int				recvLength;
+	size_t			totalread = 0;
 
 	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0))) {
 		parser.buffer[recvLength] = '\0';
-
+		totalread += recvLength;
 		add_buffer(parser);
 		if (parser.rlf == false)
 			check_requestLine(parser);
@@ -93,6 +94,10 @@ void	read_request(int newSockfd) {
 		if (parser.hf == true && parser.rlf == true)
 			break ;
 	}
+	// if (parser.headers.find("Content-Length"))
+	// 	std::cout << stoi(parser.headers.substr(parser.headers.find("Content-Length:") + 16)) << std::endl;
+	// std::cout << "Total Read: " << totalread << std::endl;
+	remove(parser.filename.c_str());
 }
 
 void	send_simple_response(int &newSockfd)
@@ -105,7 +110,7 @@ void	handle_request(int newSockfd)
 {
 	read_request(newSockfd);									// read request
 	send_simple_response(newSockfd);							// to prevent multi request from mozilla
-	std::cout << "End Reading!" << std::endl;
+	// std::cout << "End Reading!" << std::endl;
 	close(newSockfd);
 }
 
