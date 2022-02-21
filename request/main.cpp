@@ -34,6 +34,8 @@ struct RequestParse {
 	std::ofstream	rqstFile;
 
 	RequestParse() {
+		requestLine = "";
+		headers = "";
 		filename = "/var/tmp/request_" + getfilename();
 		rqstFile.open(filename, std::ofstream::out);
 		rlf = false;
@@ -82,17 +84,15 @@ void	read_request(int newSockfd) {
 
 	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0))) {
 		parser.buffer[recvLength] = '\0';
+
 		add_buffer(parser);
-		if (parser.rlf == false) {
+		if (parser.rlf == false)
 			check_requestLine(parser);
-		}
-		if (parser.hf == false) {
+		if (parser.hf == false)
 			check_headers(parser);
-		}
-		break;
+		if (parser.hf == true && parser.rlf == true)
+			break ;
 	}
-	std::cout << "Request Line: " << parser.requestLine << std::endl << std::endl;
-	std::cout << "Headers: " << parser.headers << std::endl;
 }
 
 void	send_simple_response(int &newSockfd)
