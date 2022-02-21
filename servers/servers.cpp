@@ -45,6 +45,20 @@ void	addFds( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 	}
 }
 
+int		ready_fd( std::vector<Server> &servers, fd_set &rset ) {
+
+	int fd = -1;
+	// loop over all fds after select said the a fd is ready for read
+	// to see which fd is ready for read using FD_ISSET
+	for (unsigned int i = 0; i < servers.size(); i++) {
+		if (FD_ISSET(servers[i].get_socketInfos().getSocketFd(), &rset)) {
+			fd = servers[i].get_socketInfos().getSocketFd();
+			break ;
+		}
+	}
+	return (fd);
+}
+
 std::string getfilename() {
 	static int a = 1;
 	time_t ttime = std::time(0);
@@ -95,7 +109,7 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd 
 	
 	// create another set bcs select is destroys the set feeded
 	fd_set	rset;
-	int		fd = -1;
+	int		fd;
 	unsigned int status;
 
 	while (true) {
@@ -109,21 +123,9 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd 
 			std::cerr << "Select Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		// loop over all fds after select said the a fd is ready for read
-		// to see which fd is ready for read using FD_ISSET
-		for (unsigned int i = 0; i < servers.size(); i++) {
-			if (FD_ISSET(servers[i].get_socketInfos().getSocketFd(), &rset)) {
-				fd = servers[i].get_socketInfos().getSocketFd();
-				break ;
-			}
-		}
-
-		// protection if select sending a signal for an fd doesnt exist in the set
-		if (fd == -1) {
-			std::cerr << "No Connection Failed!" << std::endl;
-			exit(EXIT_FAILURE);
-		}
-		else {
+		
+		if ((fd = ready_fd(servers, rset)) != -1)
+		{
 			// accept connection and create socket for the connection
 			newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
 			// protection for accept
