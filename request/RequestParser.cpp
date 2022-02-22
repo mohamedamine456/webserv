@@ -1,42 +1,43 @@
 #include "Utils.hpp"
 
 void	add_buffer( RequestParse &parser, int &recvLength ) {
-	if (parser.rlf == false) {
-		parser.requestLine.append(parser.buffer, recvLength);
-	}
-	else if (parser.hf == false) {
-		parser.headers.append(parser.buffer, recvLength);
-	}
-	else {
-		parser.rqstFile.write(parser.buffer, recvLength);
-	}
+    if (parser.rlf == false) {
+        parser.requestLine.resize(parser.requestLine.length() + recvLength);
+        parser.requestLine.append(parser.buffer, recvLength);
+    }
+    else if (parser.hf == false) {
+        parser.headers.resize(parser.headers.length() + recvLength);
+        parser.headers.append(parser.buffer, recvLength);
+    }
+    else {
+        parser.rqstFile.write(parser.buffer, recvLength);
+    }
 }
 
 void	check_requestLine( RequestParse &parser ) {
     int     found;
-	if (parser.rlf == false) {
-		if ((found = parser.requestLine.find("\r\n")) != std::string::npos)
-		{
-			parser.headers.append(parser.requestLine, found + 2, parser.requestLine.length() - found - 2);
-			parser.requestLine.resize(found);
-			parser.rlf = true;
-		}
-	}
+    if (parser.rlf == false) {
+        if ((found = parser.requestLine.find("\r\n")) != std::string::npos)
+        {
+            parser.headers.resize(parser.headers.length() + parser.requestLine.length() - found - 2);
+            parser.headers.append(parser.requestLine, found + 2, parser.requestLine.length() - found - 2);
+            parser.requestLine.resize(found);
+            parser.rlf = true;
+        }
+    }
 }
 
 void	check_headers( RequestParse &parser ) {
     int         found;
-    std::string tmp;
-	if (parser.hf == false) {
-		if ((found = parser.headers.find("\r\n\r\n")) != std::string::npos)
-		{
-            tmp.append(parser.headers, found + 4, parser.headers.length() - found - 4);
-			parser.rqstFile.write(tmp.c_str(), parser.headers.length() - found - 4);
-            parser.headers.resize(found);
+    if (parser.hf == false) {
+        if ((found = parser.headers.find("\r\n\r\n")) != std::string::npos)
+        {
+            parser.rqstFile.write(parser.headers.c_str() + found + 4, parser.headers.length() - found - 4);
             parser.totalread += parser.headers.length() - found - 4;
-			parser.hf = true;
-		}
-	}
+            parser.headers.resize(found);
+            parser.hf = true;
+        }
+    }
 }
 
 void	read_content_length( RequestParse &parser, int &newSockfd ) {

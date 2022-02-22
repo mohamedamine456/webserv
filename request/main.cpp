@@ -6,15 +6,17 @@ void	read_request(int &newSockfd) {
 	RequestParse	parser;
 	int				recvLength;
 
-	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0))) {
+	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0)) >= 0) {
 		parser.buffer[recvLength] = '\0';
-		add_buffer(parser, recvLength);
-		if (parser.rlf == false)
-			check_requestLine(parser);
-		if (parser.hf == false)
-			check_headers(parser);
-		if (parser.hf == true && parser.rlf == true)
-			break ;
+		if (recvLength > 0) {
+			add_buffer(parser, recvLength);
+			if (parser.rlf == false)
+				check_requestLine(parser);
+			if (parser.hf == false)
+				check_headers(parser);
+			if (parser.hf == true && parser.rlf == true)
+				break ;
+		}
 	}
 	// if (parser.headers.find("Content-Length:") != std::string::npos)
 	// {
@@ -27,7 +29,7 @@ void	read_request(int &newSockfd) {
 	// 	std::cout << "Nothing" << std::endl;
 	// }
 	std::cout << "Request Line: " << parser.requestLine << std::endl;
-	// std::cout << "Headers: " << parser.headers << std::endl;
+	std::cout << "Headers: " << parser.headers << std::endl;
 	// remove(parser.filename.c_str());
 }
 
@@ -80,6 +82,7 @@ int main() {
 		}
 		else {
 			newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
+			fcntl(newSockfd, F_SETFL, O_NONBLOCK);
 			if (newSockfd < 0) {
 				std::cerr << "Accepting Connection Failed!" << std::endl;
 				exit(EXIT_FAILURE);
