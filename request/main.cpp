@@ -2,90 +2,12 @@
 #include "Utils.hpp"
 #include "../servers/Socket.hpp"
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <cstring>
-#include <iostream>
-#include <unistd.h>
-#include <fstream>
-#include <cstdio>
-#include <fcntl.h>
-#define RECV_SIZE 4096
-
-std::string getfilename() {
-	static int a = 1;
-	time_t ttime = std::time(0);
-	std::string filename(std::to_string(ttime));
-	filename.insert(filename.length(), std::to_string(a));
-	a++;
-	return (filename);
-}
-
-struct RequestParse {
-	std::string		filename;
-	char			buffer[RECV_SIZE];
-	std::string		requestLine;
-	bool			rlf;
-	std::string		headers;
-	bool			hf;
-	std::ofstream	rqstFile;
-
-	RequestParse() {
-		requestLine = "";
-		headers = "";
-		filename = "/var/tmp/request_" + getfilename();
-		rqstFile.open(filename, std::ofstream::out);
-		rlf = false;
-		hf = false;
-	}
-};
-
-void	add_buffer( RequestParse &parser ) {
-	if (parser.rlf == false) {
-		parser.requestLine += std::string(parser.buffer);
-	}
-	else if (parser.hf == false) {
-		parser.headers += std::string(parser.buffer);
-	}
-	else {
-		parser.rqstFile << parser.buffer;
-	}
-}
-
-void	check_requestLine( RequestParse &parser ) {
-	if (parser.rlf == false) {
-		if (parser.requestLine.find("\r\n") != std::string::npos)
-		{
-			parser.headers = parser.requestLine.substr(parser.requestLine.find("\r\n") + 2);
-			parser.requestLine = parser.requestLine.substr(0, parser.requestLine.find("\r\n"));
-			parser.rlf = true;
-		}
-	}
-}
-
-void	check_headers( RequestParse &parser ) {
-	if (parser.hf == false) {
-		if (parser.headers.find("\r\n\r\n") != std::string::npos)
-		{
-			std::string rest = parser.headers.substr(parser.headers.find("\r\n\r\n") + 4);
-			parser.headers = parser.headers.substr(0, parser.headers.find("\r\n\r\n"));
-			parser.rqstFile << rest;
-			parser.hf = true;
-		}
-	}
-}
-
-void	read_request(int newSockfd) {
+void	read_request(int &newSockfd) {
 	RequestParse	parser;
 	int				recvLength;
-	size_t			totalread = 0;
 
 	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0))) {
-		parser.buffer[recvLength] = '\0';
-		totalread += recvLength;
+		parser.buffer[recvLength] = '\0'; 
 		add_buffer(parser);
 		if (parser.rlf == false)
 			check_requestLine(parser);
@@ -94,10 +16,17 @@ void	read_request(int newSockfd) {
 		if (parser.hf == true && parser.rlf == true)
 			break ;
 	}
-	// if (parser.headers.find("Content-Length"))
-	// 	std::cout << stoi(parser.headers.substr(parser.headers.find("Content-Length:") + 16)) << std::endl;
-	// std::cout << "Total Read: " << totalread << std::endl;
-	remove(parser.filename.c_str());
+	if (parser.headers.find("Content-Length:") != std::string::npos)
+	{
+		read_content_length(parser, newSockfd);
+	}
+	else if (parser.headers.find("Transfer-Encoding:") != std::string::npos){
+		read_chunked(parser, newSockfd);
+	}
+	else {
+		std::cout << "Nothing" << std::endl;
+	}
+	// remove(parser.filename.c_str());
 }
 
 void	send_simple_response(int &newSockfd)

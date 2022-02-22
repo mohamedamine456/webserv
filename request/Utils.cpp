@@ -46,7 +46,7 @@ std::string getfilename( std::string str ) {
 	static int a = 1;
 	time_t ttime = std::time(0);
 	std::string filename(std::to_string(ttime));
-	filename.insert(filename.length(), std::to_string(a));
+	filename.insert(filename.length(), std::to_string(a) + "_" + str);
 	a++;
 	return (filename);
 }
