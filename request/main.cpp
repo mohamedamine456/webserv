@@ -7,8 +7,8 @@ void	read_request(int &newSockfd) {
 	int				recvLength;
 
 	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0))) {
-		parser.buffer[recvLength] = '\0'; 
-		add_buffer(parser);
+		parser.buffer[recvLength] = '\0';
+		add_buffer(parser, recvLength);
 		if (parser.rlf == false)
 			check_requestLine(parser);
 		if (parser.hf == false)
@@ -16,16 +16,18 @@ void	read_request(int &newSockfd) {
 		if (parser.hf == true && parser.rlf == true)
 			break ;
 	}
-	if (parser.headers.find("Content-Length:") != std::string::npos)
-	{
-		read_content_length(parser, newSockfd);
-	}
-	else if (parser.headers.find("Transfer-Encoding:") != std::string::npos){
-		read_chunked(parser, newSockfd);
-	}
-	else {
-		std::cout << "Nothing" << std::endl;
-	}
+	// if (parser.headers.find("Content-Length:") != std::string::npos)
+	// {
+	// 	read_content_length(parser, newSockfd);
+	// }
+	// else if (parser.headers.find("Transfer-Encoding:") != std::string::npos){
+	// 	read_chunked(parser, newSockfd);
+	// }
+	// else {
+	// 	std::cout << "Nothing" << std::endl;
+	// }
+	std::cout << "Request Line: " << parser.requestLine << std::endl;
+	// std::cout << "Headers: " << parser.headers << std::endl;
 	// remove(parser.filename.c_str());
 }
 
