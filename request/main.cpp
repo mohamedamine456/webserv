@@ -6,31 +6,34 @@ void	read_request(int &newSockfd) {
 	RequestParse	parser;
 	int				recvLength;
 
-	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, 0)) >= 0) {
+	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, MSG_DONTWAIT)) > 0) {
 		parser.buffer[recvLength] = '\0';
-		if (recvLength > 0) {
-			add_buffer(parser, recvLength);
-			if (parser.rlf == false)
-				check_requestLine(parser);
-			if (parser.hf == false)
-				check_headers(parser);
-			if (parser.hf == true && parser.rlf == true)
-				break ;
-		}
+		add_buffer(parser, recvLength);
+		if (parser.rlf == false)
+			check_requestLine(parser);
+		if (parser.hf == false)
+			check_headers(parser);
+		if (parser.hf == true && parser.rlf == true)
+			break ;
 	}
-	// if (parser.headers.find("Content-Length:") != std::string::npos)
-	// {
-	// 	read_content_length(parser, newSockfd);
-	// }
-	// else if (parser.headers.find("Transfer-Encoding:") != std::string::npos){
-	// 	read_chunked(parser, newSockfd);
-	// }
-	// else {
-	// 	std::cout << "Nothing" << std::endl;
-	// }
-	std::cout << "Request Line: " << parser.requestLine << std::endl;
-	std::cout << "Headers: " << parser.headers << std::endl;
-	// remove(parser.filename.c_str());
+	if (parser.headers.find("Content-Length:") != std::string::npos)
+	{
+		read_content_length(parser, newSockfd);
+	}
+	else if (parser.headers.find("Transfer-Encoding:") != std::string::npos){
+		read_chunked(parser, newSockfd);
+	}
+	else {
+		std::cout << "Nothing" << std::endl;
+	}
+	if (recvLength == -1) {
+		perror("RECV: ");
+	}
+	else {
+		std::cout << "Request Line: " << parser.requestLine << std::endl;
+		std::cout << "Headers:\n" << parser.headers << std::endl;
+	}
+	remove(parser.filename.c_str());
 }
 
 void	send_simple_response(int &newSockfd)
@@ -48,46 +51,54 @@ void	handle_request(int newSockfd)
 }
 
 int main() {
-	std::vector<Socket>	servers = create_multiple_servers();
-	int					sockfd;											// server socket FD
-	int					newSockfd;										// new connection FD										// server configuration
+	std::vector<Socket>	servers = create_multiple_servers();										// server socket FD
 	struct sockaddr_in	connAddress;
 	socklen_t stor_size = sizeof(struct sockaddr_in);
+	std::vector<int>	clients;
 
-	fd_set	rfds, rset;
-	int maxfd = -1, fd = -1;
+	// start
+	fd_set	rfds;
+	int maxfd = -1;
 	unsigned int i, status;
-	FD_ZERO(&rfds);
-	for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
-		FD_SET((*it).getSocketFd(), &rfds);
-		if ((*it).getSocketFd() > maxfd)
-			maxfd = (*it).getSocketFd();
-	}
+	
 	while (true) {
-		rset = rfds;
-		status = select(maxfd + 1, &rset, NULL, NULL, NULL);
+		maxfd = -1;
+		FD_ZERO(&rfds);
+		for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
+			FD_SET((*it).getSocketFd(), &rfds);
+			if ((*it).getSocketFd() > maxfd)
+				maxfd = (*it).getSocketFd();
+		}
+		for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
+			FD_SET((*it), &rfds);
+			if ((*it) > maxfd)
+				maxfd = (*it);
+		}
+		status = select(maxfd + 1, &rfds, NULL, NULL, NULL);
 		if (status < 0) {
 			std::cerr << "Select Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		for (i = 0; i < servers.size(); i++) {
-			if (FD_ISSET(servers[i].getSocketFd(), &rset)) {
-				fd = servers[i].getSocketFd();
+		for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
+			if (FD_ISSET((*it).getSocketFd(), &rfds)) {
+				int newSockfd = accept((*it).getSocketFd(), (struct sockaddr *)&connAddress, &stor_size);
+				fcntl(newSockfd, F_SETFL, O_NONBLOCK);
+				if (newSockfd < 0) {
+					std::cerr << "Accepting Connection Failed!" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+				clients.push_back(newSockfd);
+				// break ;
+			}
+		}
+		for(std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
+			if (FD_ISSET((*it), &rfds)) {
+				handle_request((*it));
+				close((*it));
+				clients.erase(it);
 				break ;
+				std::cout << "D" << std::endl;
 			}
-		}
-		if (fd == -1) {
-			std::cerr << "No Connection Failed!" << std::endl;
-			exit(EXIT_FAILURE);
-		}
-		else {
-			newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
-			fcntl(newSockfd, F_SETFL, O_NONBLOCK);
-			if (newSockfd < 0) {
-				std::cerr << "Accepting Connection Failed!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			handle_request(newSockfd);
 		}
 	}
 }
