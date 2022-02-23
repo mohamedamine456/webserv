@@ -57,7 +57,7 @@ int main() {
 	std::vector<int>	clients;
 
 	// start
-	fd_set	rfds;
+	fd_set	rfds, rset;
 	int maxfd = -1;
 	unsigned int i, status;
 	
