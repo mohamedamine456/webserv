@@ -1,9 +1,9 @@
-#ifndef REQUESTPARSER_HPP
-#define REQUESTPARSER_HPP
+#ifndef REQUESTLEXER_HPP
+#define REQUESTLEXER_HPP
 #include "Utils.hpp"
 #define RECV_SIZE 4096
 
-class RequestParser {
+class RequestLexer {
 	std::string		_filename;
 	std::string		_requestLine;
 	bool			_lineSet;
@@ -14,8 +14,8 @@ class RequestParser {
 
 	public:
 		char			buffer[RECV_SIZE + 1];
-		RequestParser();
-		~RequestParser();
+		RequestLexer();
+		~RequestLexer();
 
 		// Getters
 		std::string		&getFilename();

@@ -1,9 +1,9 @@
-#include "RequestParser.hpp"
+#include "RequestLexer.hpp"
 #include "Utils.hpp"
 #include "../servers/Socket.hpp"
 
 void	read_request(int &newSockfd) {
-	RequestParser	parser;
+	RequestLexer	parser;
 	int				recvLength;
 
 	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, MSG_DONTWAIT)) > 0) {

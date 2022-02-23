@@ -27,6 +27,8 @@
 #include "../srcs/request/Request.hpp"
 #include "../srcs/request/Utils.hpp"
 #include "./MimeTypes.Class.hpp"
+#include "../servers/SocketInfos.hpp"
+#include "../request/RequestLexer.hpp"
 
 /*
 ** COLORS DEFINITION: **********************************************************

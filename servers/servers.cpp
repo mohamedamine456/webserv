@@ -1,5 +1,4 @@
 #include "../include/webserv.hpp"
-#include "SocketInfos.hpp"
 
 int		create_servers( std::vector< Server > &servers ) {
 	std::vector<int>    bound;
@@ -59,47 +58,46 @@ int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
 	return (fd);
 }
 
-std::string randomfilename() {
-	static int a = 1;
-	time_t ttime = std::time(0);
-	std::string filename(std::to_string(ttime));
-	filename.insert(filename.length(), std::to_string(a));
-	a++;
-	return (filename);
-}
+void	read_request(int &newSockfd) {
+	RequestLexer	parser;
+	int				recvLength;
 
-// read the request need improvements
-Request	read_request(int &newSockfd) {
-	Request				rqst;
-	int					recvLength = 1024;								// length received in request
-	char				buffer[1024];									// request reading buffer
-	std::string			filename = "/var/tmp/request_" + randomfilename();
-	std::ofstream		rqstFile(filename, std::ofstream::out);
-	std::cout << "Receiving:" << std::endl;
-	while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {
-		buffer[recvLength] = '\0';
-		rqstFile << buffer;
+	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, MSG_DONTWAIT)) > 0) {
+		parser.buffer[recvLength] = '\0';
+		parser.add_buffer(recvLength);
+		if (parser.getLineSet() == false)
+			parser.check_requestLine();
+		if (parser.getHeadersSet() == false)
+			parser.check_headers();
+		if (parser.getHeadersSet() == true && parser.getLineSet() == true)
+			break ;
 	}
-	buffer[recvLength] = '\0';
-	rqstFile << buffer;
-	std::cout << filename << "\n";
-	remove(filename.c_str());
-	return rqst;
+	if (parser.getHeaders().find("Content-Length:") != std::string::npos)
+	{
+		parser.read_content_length(newSockfd);
+	}
+	else if (parser.getHeaders().find("Transfer-Encoding:") != std::string::npos){
+		parser.read_chunked(newSockfd);
+	}
+	else {
+		std::cout << "Nothing" << std::endl;
+	}
+	if (parser.getRequestLine() != "" && parser.getHeaders() != "") {
+		std::cout << "Request Line: " << parser.getRequestLine() << std::endl;
+		std::cout << "Headers:\n" << parser.getHeaders() << std::endl;
+	}
 }
 
-// to send simple ressponse
 void	send_simple_response(int &newSockfd)
 {
 	std::string str_send = "HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
 	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
 }
 
-// handle request and send a simple response
 void	handle_request(int newSockfd)
 {
-	Request rqst = read_request(newSockfd);						// read request
+	read_request(newSockfd);									// read request
 	send_simple_response(newSockfd);							// to prevent multi request from mozilla
-	std::cout << "End Reading!" << std::endl;
 }
 
 void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
