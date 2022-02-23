@@ -45,7 +45,7 @@ void	addFds( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 	}
 }
 
-int		ready_fd( std::vector<Server> &servers, fd_set &rset ) {
+int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
 
 	int fd = -1;
 	// loop over all fds after select said the a fd is ready for read
@@ -103,9 +103,10 @@ void	handle_request(int newSockfd)
 }
 
 void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
-	int					newSockfd;										// new connection FD										// server configuration
+	// server configuration
 	struct sockaddr_in	connAddress;
 	socklen_t stor_size = sizeof(struct sockaddr_in);
+	std::vector<int>	clients;
 	
 	// create another set bcs select is destroys the set feeded
 	fd_set	rset;
@@ -115,7 +116,11 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd 
 	while (true) {
 		// initialize fd set
 		rset = rfds;
-
+		for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
+			FD_SET((*it), &rset);
+			if ((*it) > maxfd)
+				maxfd = (*it);
+		}
 		// feed fds to select only for read option
 		status = select(maxfd + 1, &rset, NULL, NULL, NULL);
 		// protection for select
@@ -124,20 +129,27 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd 
 			exit(EXIT_FAILURE);
 		}
 		
-		if ((fd = ready_fd(servers, rset)) != -1)
+		if ((fd = servers_fd(servers, rset)) != -1)
 		{
 			// accept connection and create socket for the connection
-			newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
+			int newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
 			// protection for accept
 			if (newSockfd < 0) {
 				std::cerr << "Accepting Connection Failed!" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 			fcntl(newSockfd, F_SETFL, O_NONBLOCK);
-			handle_request(newSockfd);
-
-			// close connection socket after sending a response 
-			close(newSockfd);
+			clients.push_back(newSockfd);
+		}
+		for(std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
+			if (FD_ISSET((*it), &rset)) {
+				handle_request((*it));
+				std::vector<int>::iterator tmpIt = it - 1;
+				close((*it));
+				clients.erase(it);
+				it = tmpIt;
+				// break ;
+			}
 		}
 	}
 }

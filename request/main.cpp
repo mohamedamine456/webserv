@@ -26,10 +26,7 @@ void	read_request(int &newSockfd) {
 	else {
 		std::cout << "Nothing" << std::endl;
 	}
-	if (recvLength == -1) {
-		perror("RECV: ");
-	}
-	else {
+	if (parser.requestLine != "" && parser.headers != "") {
 		std::cout << "Request Line: " << parser.requestLine << std::endl;
 		std::cout << "Headers:\n" << parser.headers << std::endl;
 	}
@@ -60,44 +57,45 @@ int main() {
 	fd_set	rfds, rset;
 	int maxfd = -1;
 	unsigned int i, status;
+	FD_ZERO(&rfds);
+	for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
+		FD_SET((*it).getSocketFd(), &rfds);
+		if ((*it).getSocketFd() > maxfd)
+			maxfd = (*it).getSocketFd();
+	}
 	
 	while (true) {
-		maxfd = -1;
-		FD_ZERO(&rfds);
-		for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
-			FD_SET((*it).getSocketFd(), &rfds);
-			if ((*it).getSocketFd() > maxfd)
-				maxfd = (*it).getSocketFd();
-		}
+		rset = rfds;
 		for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-			FD_SET((*it), &rfds);
+			FD_SET((*it), &rset);
 			if ((*it) > maxfd)
 				maxfd = (*it);
 		}
-		status = select(maxfd + 1, &rfds, NULL, NULL, NULL);
+		status = select(maxfd + 1, &rset, NULL, NULL, NULL);
 		if (status < 0) {
 			std::cerr << "Select Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		for (std::vector<Socket>::iterator it = servers.begin(); it != servers.end(); it++) {
-			if (FD_ISSET((*it).getSocketFd(), &rfds)) {
+			if (FD_ISSET((*it).getSocketFd(), &rset)) {
 				int newSockfd = accept((*it).getSocketFd(), (struct sockaddr *)&connAddress, &stor_size);
-				fcntl(newSockfd, F_SETFL, O_NONBLOCK);
 				if (newSockfd < 0) {
 					std::cerr << "Accepting Connection Failed!" << std::endl;
 					exit(EXIT_FAILURE);
 				}
+				fcntl(newSockfd, F_SETFL, O_NONBLOCK);
 				clients.push_back(newSockfd);
 				// break ;
 			}
 		}
 		for(std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-			if (FD_ISSET((*it), &rfds)) {
+			if (FD_ISSET((*it), &rset)) {
 				handle_request((*it));
+				std::vector<int>::iterator tmpIt = it - 1;
 				close((*it));
 				clients.erase(it);
-				break ;
-				std::cout << "D" << std::endl;
+				it = tmpIt;
+				// break ;
 			}
 		}
 	}

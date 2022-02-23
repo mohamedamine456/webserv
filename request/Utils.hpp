@@ -16,7 +16,7 @@
 #include <fcntl.h>
 #include "../servers/Socket.hpp"
 #define MAX_SERVERS 1
-#define PORT 8080
+#define PORT 8000
 #define RECV_SIZE 4096
 
 std::vector< std::string >		StringSplit( std::string str, std::string delimiter );
@@ -25,7 +25,7 @@ std::string						getfilename( std::string str );
 
 struct RequestParse {
 	std::string		filename;
-	char			buffer[RECV_SIZE];
+	char			buffer[RECV_SIZE + 1];
 	std::string		requestLine;
 	bool			rlf;
 	std::string		headers;
