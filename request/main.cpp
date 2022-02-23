@@ -1,36 +1,35 @@
-#include "Request.hpp"
+#include "RequestParser.hpp"
 #include "Utils.hpp"
 #include "../servers/Socket.hpp"
 
 void	read_request(int &newSockfd) {
-	RequestParse	parser;
+	RequestParser	parser;
 	int				recvLength;
 
 	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, MSG_DONTWAIT)) > 0) {
 		parser.buffer[recvLength] = '\0';
-		add_buffer(parser, recvLength);
-		if (parser.rlf == false)
-			check_requestLine(parser);
-		if (parser.hf == false)
-			check_headers(parser);
-		if (parser.hf == true && parser.rlf == true)
+		parser.add_buffer(recvLength);
+		if (parser.getLineSet() == false)
+			parser.check_requestLine();
+		if (parser.getHeadersSet() == false)
+			parser.check_headers();
+		if (parser.getHeadersSet() == true && parser.getLineSet() == true)
 			break ;
 	}
-	if (parser.headers.find("Content-Length:") != std::string::npos)
+	if (parser.getHeaders().find("Content-Length:") != std::string::npos)
 	{
-		read_content_length(parser, newSockfd);
+		parser.read_content_length(newSockfd);
 	}
-	else if (parser.headers.find("Transfer-Encoding:") != std::string::npos){
-		read_chunked(parser, newSockfd);
+	else if (parser.getHeaders().find("Transfer-Encoding:") != std::string::npos){
+		parser.read_chunked(newSockfd);
 	}
 	else {
 		std::cout << "Nothing" << std::endl;
 	}
-	if (parser.requestLine != "" && parser.headers != "") {
-		std::cout << "Request Line: " << parser.requestLine << std::endl;
-		std::cout << "Headers:\n" << parser.headers << std::endl;
+	if (parser.getRequestLine() != "" && parser.getHeaders() != "") {
+		std::cout << "Request Line: " << parser.getRequestLine() << std::endl;
+		std::cout << "Headers:\n" << parser.getHeaders() << std::endl;
 	}
-	remove(parser.filename.c_str());
 }
 
 void	send_simple_response(int &newSockfd)

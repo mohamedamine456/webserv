@@ -59,7 +59,7 @@ int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
 	return (fd);
 }
 
-std::string getfilename() {
+std::string randomfilename() {
 	static int a = 1;
 	time_t ttime = std::time(0);
 	std::string filename(std::to_string(ttime));
@@ -73,7 +73,7 @@ Request	read_request(int &newSockfd) {
 	Request				rqst;
 	int					recvLength = 1024;								// length received in request
 	char				buffer[1024];									// request reading buffer
-	std::string			filename = "/var/tmp/request_" + getfilename();
+	std::string			filename = "/var/tmp/request_" + randomfilename();
 	std::ofstream		rqstFile(filename, std::ofstream::out);
 	std::cout << "Receiving:" << std::endl;
 	while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {

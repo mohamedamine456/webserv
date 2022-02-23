@@ -60,8 +60,6 @@ void		Request::setPathFirstLine ( std::string &firstLine ) {
 	// else {
 	// 	this->error = true;
 	// }
-
-	
 }
 
 void		Request::setPath () {

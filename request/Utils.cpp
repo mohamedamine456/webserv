@@ -42,7 +42,7 @@ std::vector< Socket >		create_multiple_servers()
 	return servers;
 }
 
-std::string getfilename( std::string str ) {
+std::string randomfilename( std::string str ) {
 	static int a = 1;
 	time_t ttime = std::time(0);
 	std::string filename(std::to_string(ttime));
