@@ -29,6 +29,7 @@
 #include "./MimeTypes.Class.hpp"
 #include "../servers/SocketInfos.hpp"
 #include "../request/RequestLexer.hpp"
+#include "../servers/servers.hpp"
 
 /*
 ** COLORS DEFINITION: **********************************************************
@@ -99,12 +100,6 @@ void                    setData(std::string &FILE, std::string::iterator &it, st
 void                    fill_client_body_size(std::string &FILE, std::string::iterator &it, std::vector<Server> &vect, ServerData &data);
 std::string             getPath(std::string &FILE, std::string::iterator &it);
 std::vector<Server>     confParsing(std::string configFILE);
-
-// creation of servers
-
-int						create_servers( std::vector< Server > &servers );
-void                    addFds( std::vector<Server> &servers, fd_set &rfds, int &maxfd );
-void                    handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd );
 
 
 /*

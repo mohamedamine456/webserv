@@ -1,4 +1,4 @@
-#include "../include/webserv.hpp"
+#include "servers.hpp"
 
 int		create_servers( std::vector< Server > &servers ) {
 	std::vector<int>    bound;
@@ -30,7 +30,7 @@ int		create_servers( std::vector< Server > &servers ) {
 	return (0);
 }
 
-void	addFds( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
+void	add_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 	// to remove all file descriptors from the the set rfds
 	FD_ZERO(&rfds);
 
@@ -42,6 +42,31 @@ void	addFds( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 		if ((*it).get_socketInfos().getSocketFd() > maxfd)
 			maxfd = (*it).get_socketInfos().getSocketFd();
 	}
+}
+
+void	add_clients( std::vector<int> &clients, fd_set &rset, int &maxfd )
+{
+	for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
+		FD_SET((*it), &rset);
+		if ((*it) > maxfd)
+			maxfd = (*it);
+	}
+}
+
+void	accept_connection( std::vector<int> &clients, int &fd )
+{
+	// New Connection configuration
+	struct sockaddr_in	connAddress;
+	socklen_t stor_size = sizeof(struct sockaddr_in);
+
+	int newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
+	// protection for accept
+	if (newSockfd < 0) {
+		std::cerr << "Accepting Connection Failed!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	// fcntl(newSockfd, F_SETFL, O_NONBLOCK);		// check if this is the right place
+	clients.push_back(newSockfd);
 }
 
 int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
@@ -101,11 +126,8 @@ void	handle_request(int newSockfd)
 }
 
 void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
-	// server configuration
-	struct sockaddr_in	connAddress;
-	socklen_t stor_size = sizeof(struct sockaddr_in);
 	std::vector<int>	clients;
-	
+
 	// create another set bcs select is destroys the set feeded
 	fd_set	rset;
 	int		fd;
@@ -114,11 +136,9 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd 
 	while (true) {
 		// initialize fd set
 		rset = rfds;
-		for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-			FD_SET((*it), &rset);
-			if ((*it) > maxfd)
-				maxfd = (*it);
-		}
+
+		// add client socket file descriptors to rset
+		add_clients(clients, rset, maxfd);
 		// feed fds to select only for read option
 		status = select(maxfd + 1, &rset, NULL, NULL, NULL);
 		// protection for select
@@ -130,14 +150,7 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd 
 		if ((fd = servers_fd(servers, rset)) != -1)
 		{
 			// accept connection and create socket for the connection
-			int newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
-			// protection for accept
-			if (newSockfd < 0) {
-				std::cerr << "Accepting Connection Failed!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			fcntl(newSockfd, F_SETFL, O_NONBLOCK);
-			clients.push_back(newSockfd);
+			accept_connection(clients, fd);
 		}
 		for(std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
 			if (FD_ISSET((*it), &rset)) {
