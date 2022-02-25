@@ -28,7 +28,7 @@
 #include "../srcs/request/Utils.hpp"
 #include "./MimeTypes.Class.hpp"
 #include "../servers/SocketInfos.hpp"
-#include "../request/RequestLexer.hpp"
+#include "../srcs/request/RequestLexer.hpp"
 #include "../servers/servers.hpp"
 
 /*

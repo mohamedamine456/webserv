@@ -111,6 +111,7 @@ void	read_request(int &newSockfd) {
 		std::cout << "Request Line: " << parser.getRequestLine() << std::endl;
 		std::cout << "Headers:\n" << parser.getHeaders() << std::endl;
 	}
+	// sleep(20);
 }
 
 void	send_simple_response(int &newSockfd)

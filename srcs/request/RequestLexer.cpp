@@ -3,8 +3,7 @@
 RequestLexer::RequestLexer() {
 	this->_requestLine = "";
 	this->_headers = "";
-	this->_filename = "/var/tmp/request_" + randomfilename("");
-	this->_rqstFile.open(this->_filename, std::ofstream::out);
+	this->_filename = "/var/tmp/request_" + randomfilename("") + "_body";
 	this->_lineSet = false;
 	this->_headersSet = false;
 	this->_totalread = 0;
@@ -81,6 +80,8 @@ void	RequestLexer::check_headers() {
 void	RequestLexer::read_content_length( int &newSockfd ) {
 	int				recvLength;
 	size_t          content_length = stoi(this->_headers.substr(this->_headers.find("Content-Length:") + 16));
+	
+	this->_rqstFile.open(this->_filename, std::ofstream::out);
 	while ((recvLength = recv(newSockfd, &this->buffer, RECV_SIZE, 0))) {
 		this->buffer[recvLength] = '\0';
 		this->_totalread += recvLength;
@@ -93,6 +94,8 @@ void	RequestLexer::read_content_length( int &newSockfd ) {
 void    RequestLexer::read_chunked( int &newSockfd ) {
 	std::string     combin;
 	int				recvLength;
+	
+	this->_rqstFile.open(this->_filename, std::ofstream::out);
 	while ((recvLength = recv(newSockfd, &this->buffer, RECV_SIZE, 0))) {
 		this->buffer[recvLength] = '\0';
 		this->_totalread += recvLength;

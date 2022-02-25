@@ -14,12 +14,11 @@ NAME=   webserv
 
 SERVER_SRCS=	./servers/servers.cpp\
 				./servers/SocketInfos.cpp\
-				./servers/Socket.cpp
 
 REQUEST_SRCS=	./srcs/request/Request.cpp\
 				./srcs/request/requestHandler.cpp\
-				./request/Utils.cpp\
-				./request/RequestLexer.cpp\
+				./srcs/request/Utils.cpp\
+				./srcs/request/RequestLexer.cpp\
 
 RESPONSE_SRCS=	./srcs/response/responseHandler.cpp\
 
