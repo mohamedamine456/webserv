@@ -6,11 +6,12 @@ RequestLexer::RequestLexer() {
 	this->_filename = "/var/tmp/request_" + randomfilename("") + "_body";
 	this->_lineSet = false;
 	this->_headersSet = false;
+	this->_fileOpened = false;
 	this->_totalread = 0;
 }
 
 RequestLexer::~RequestLexer() {
-	remove(this->_filename.c_str());
+	// remove(this->_filename.c_str());
 }
 
 std::string		&RequestLexer::getFilename() {
@@ -47,6 +48,8 @@ void	RequestLexer::add_buffer( int &recvLength ) {
 		this->_headers.append(this->buffer, recvLength);
 	}
 	else {
+		if (this->_fileOpened == false)
+			this->_rqstFile.open(this->_filename, std::ofstream::out);
 		this->_rqstFile.write(this->buffer, recvLength);
 	}
 }
@@ -69,6 +72,8 @@ void	RequestLexer::check_headers() {
 	if (this->_headersSet == false) {
 		if ((found = this->_headers.find("\r\n\r\n")) != std::string::npos)
 		{
+			this->_rqstFile.open(this->_filename, std::ofstream::out);
+			this->_fileOpened = true;
 			this->_rqstFile.write(this->_headers.c_str() + found + 4, this->_headers.length() - found - 4);
 			this->_totalread += this->_headers.length() - found - 4;
 			this->_headers.resize(found);
@@ -80,8 +85,8 @@ void	RequestLexer::check_headers() {
 void	RequestLexer::read_content_length( int &newSockfd ) {
 	int				recvLength;
 	size_t          content_length = stoi(this->_headers.substr(this->_headers.find("Content-Length:") + 16));
-	
-	this->_rqstFile.open(this->_filename, std::ofstream::out);
+	if (this->_fileOpened == false)
+		this->_rqstFile.open(this->_filename, std::ofstream::out);
 	while ((recvLength = recv(newSockfd, &this->buffer, RECV_SIZE, 0))) {
 		this->buffer[recvLength] = '\0';
 		this->_totalread += recvLength;
@@ -95,7 +100,8 @@ void    RequestLexer::read_chunked( int &newSockfd ) {
 	std::string     combin;
 	int				recvLength;
 	
-	this->_rqstFile.open(this->_filename, std::ofstream::out);
+	if (this->_fileOpened == false)
+		this->_rqstFile.open(this->_filename, std::ofstream::out);
 	while ((recvLength = recv(newSockfd, &this->buffer, RECV_SIZE, 0))) {
 		this->buffer[recvLength] = '\0';
 		this->_totalread += recvLength;

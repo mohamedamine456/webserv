@@ -10,6 +10,7 @@ class RequestLexer {
 	std::string		_headers;
 	bool			_headersSet;
 	std::ofstream	_rqstFile;
+	bool			_fileOpened;
 	size_t			_totalread;
 
 	public:

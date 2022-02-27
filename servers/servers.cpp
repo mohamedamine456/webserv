@@ -65,7 +65,7 @@ void	accept_connection( std::vector<int> &clients, int &fd )
 		std::cerr << "Accepting Connection Failed!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	// fcntl(newSockfd, F_SETFL, O_NONBLOCK);		// check if this is the right place
+	fcntl(newSockfd, F_SETFL, O_NONBLOCK);		// check if this is the right place
 	clients.push_back(newSockfd);
 }
 
@@ -107,11 +107,6 @@ void	read_request(int &newSockfd) {
 	else {
 		std::cout << "Nothing" << std::endl;
 	}
-	if (parser.getRequestLine() != "" && parser.getHeaders() != "") {
-		std::cout << "Request Line: " << parser.getRequestLine() << std::endl;
-		std::cout << "Headers:\n" << parser.getHeaders() << std::endl;
-	}
-	// sleep(20);
 }
 
 void	send_simple_response(int &newSockfd)
