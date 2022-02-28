@@ -21,5 +21,7 @@
 std::vector< std::string >		StringSplit( std::string str, std::string delimiter );
 std::vector< SocketInfos >		create_multiple_servers();
 std::string						randomfilename( std::string str );
+std::string						trimString( std::string str, char c );
+
 
 #endif

@@ -4,17 +4,19 @@
 #define RECV_SIZE 4096
 
 class RequestLexer {
-	std::string		_filename;
-	std::string		_requestLine;
-	bool			_lineSet;
-	std::string		_headers;
-	bool			_headersSet;
-	std::ofstream	_rqstFile;
-	bool			_fileOpened;
-	size_t			_totalread;
+	int						socketFd;
+	struct sockaddr_in		socketAddress;
+	std::string				_filename;
+	std::string				_requestLine;
+	bool					_lineSet;
+	std::string				_headers;
+	bool					_headersSet;
+	std::ofstream			_rqstFile;
+	bool					_fileOpened;
+	size_t					_totalread;
 
 	public:
-		char			buffer[RECV_SIZE + 1];
+		char				buffer[RECV_SIZE + 1];
 		RequestLexer();
 		~RequestLexer();
 

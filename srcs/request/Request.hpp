@@ -5,6 +5,7 @@
 #include <vector>
 #include <utility>
 #include <fstream>
+#include "Utils.hpp"
 
 class Request {
     private:
@@ -20,7 +21,6 @@ class Request {
 		bool											error;
 
 		// private methods
-		std::string										trimString( std::string str, char c );
 	public:
 		Request ();
 		Request ( const Request &rqst );
@@ -28,7 +28,6 @@ class Request {
 		Request											&operator= ( const Request &rqst );
 		// Setters
 		void											setMethod ( std::string &firstLine );
-		void											setPathFirstLine ( std::string &firstLine );
 		void											setPath ();
 		void											setQuery ( std::string &firstLine );
 		void											setVersion ( std::string &firstLine );

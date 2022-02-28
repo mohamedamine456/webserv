@@ -26,7 +26,7 @@ void	Request::setHeaders( std::vector< std::string > &headers ) {
 	for (std::vector<std::string>::iterator it = headers.begin(); it != headers.end(); it++) {
 		std::string key = (*it).substr(0, (*it).find(':'));
 		std::string value = (*it).substr((*it).find(':') + 1);
-		this->trimString(value, ' ');
+		trimString(value, ' ');
 		this->headers.push_back(std::make_pair(key, value));
 	}
 }
@@ -36,26 +36,6 @@ void		Request::setMethod ( std::string &firstLine ) {
 		this->method = this->method = firstLine.substr(0, firstLine.find(' '));;
 		// test for supported methods
 		firstLine.erase(0, firstLine.find(' ') + 1);
-	}
-	else {
-		this->error = true;
-	}
-}
-
-void		Request::setPathFirstLine ( std::string &firstLine ) {
-	if (firstLine.find("http://") != std::string::npos && firstLine.find("http://") == 0) {
-		firstLine.erase(0, 7);
-		std::string	tmpHost = firstLine.substr(0, firstLine.find("/"));
-		firstLine.erase(0, firstLine.find("/"));
-		this->setHost(tmpHost);
-	}
-	if (firstLine.find(' ') != std::string::npos) {
-		this->path = firstLine.substr(0, firstLine.find(' '));
-		// test for supported methods
-		firstLine.erase(0, firstLine.find(' ') + 1);
-	}
-	if (this->path[0] != '/') {
-		this->path = "/" + this->path;
 	}
 	else {
 		this->error = true;
@@ -106,7 +86,7 @@ void		Request::setPort ( std::string  portString ) {
 void		Request::addHeader ( std::string header ) {
 	std::string key = header.substr(0, header.find(":"));
 	std::string value = header.substr(header.find(":") + 1);
-	this->trimString(value, ' ');
+	trimString(value, ' ');
 	this->headers.push_back(std::make_pair(key, value));
 }
 
@@ -138,18 +118,4 @@ int				&Request::getPort () {
 
 std::string		&Request::getBodyfile () {
 	return this->bodyfilename;
-}
-
-std::string		Request::trimString( std::string str, char c )
-{
-	for (std::string::iterator it = str.begin(); *it == c; it++) {
-        str.erase(it);
-        it = str.begin();
-    }
-    if (*(str.begin()) == c)
-        str.erase(str.begin());
-    for (std::string::iterator it = str.end() - 1; *it == c; it--) {
-        str.erase(it);
-    }
-	return (str);
 }
