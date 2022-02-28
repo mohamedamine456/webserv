@@ -44,31 +44,6 @@ void	add_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 	}
 }
 
-void	add_clients( std::vector<int> &clients, fd_set &rset, int &maxfd )
-{
-	for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-		FD_SET((*it), &rset);
-		if ((*it) > maxfd)
-			maxfd = (*it);
-	}
-}
-
-void	accept_connection( std::vector<int> &clients, int &fd )
-{
-	// New Connection configuration
-	struct sockaddr_in	connAddress;
-	socklen_t stor_size = sizeof(struct sockaddr_in);
-
-	int newSockfd = accept(fd, (struct sockaddr *)&connAddress, &stor_size);
-	// protection for accept
-	if (newSockfd < 0) {
-		std::cerr << "Accepting Connection Failed!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	fcntl(newSockfd, F_SETFL, O_NONBLOCK);		// check if this is the right place
-	clients.push_back(newSockfd);
-}
-
 int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
 
 	int fd = -1;
@@ -83,79 +58,57 @@ int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
 	return (fd);
 }
 
-void	read_request(int &newSockfd) {
-	RequestLexer	parser;
-	int				recvLength;
-
-	while ((recvLength = recv(newSockfd, &parser.buffer, RECV_SIZE, MSG_DONTWAIT)) > 0) {
-		parser.buffer[recvLength] = '\0';
-		parser.add_buffer(recvLength);
-		if (parser.getLineSet() == false)
-			parser.check_requestLine();
-		if (parser.getHeadersSet() == false)
-			parser.check_headers();
-		if (parser.getHeadersSet() == true && parser.getLineSet() == true)
-			break ;
-	}
-	if (parser.getHeaders().find("Content-Length:") != std::string::npos)
-	{
-		parser.read_content_length(newSockfd);
-	}
-	else if (parser.getHeaders().find("Transfer-Encoding:") != std::string::npos){
-		parser.read_chunked(newSockfd);
-	}
-	else {
-		std::cout << "Nothing" << std::endl;
-	}
-}
-
 void	send_simple_response(int &newSockfd)
 {
 	std::string str_send = "HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
 	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
 }
 
-void	handle_request(int newSockfd)
-{
-	read_request(newSockfd);									// read request
-	send_simple_response(newSockfd);							// to prevent multi request from mozilla
-}
-
-void	handle_all_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
-	std::vector<int>	clients;
+void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, int &maxfd ) {
+	char										buffer[RECV_SIZE + 1];	// buffer for read
+	std::vector< std::pair< Client, Request > >	read_clients;
+	std::vector< std::pair< Client, Request > >	write_clients;
 
 	// create another set bcs select is destroys the set feeded
-	fd_set	rset;
+	fd_set	backup_rset;
 	int		fd;
 	unsigned int status;
 
 	while (true) {
 		// initialize fd set
-		rset = rfds;
+		backup_rset = read_fds;
 
 		// add client socket file descriptors to rset
-		add_clients(clients, rset, maxfd);
+		
 		// feed fds to select only for read option
-		status = select(maxfd + 1, &rset, NULL, NULL, NULL);
+		status = select(maxfd + 1, &backup_rset, NULL, NULL, NULL);
 		// protection for select
 		if (status < 0) {
 			std::cerr << "Select Failed!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		
-		if ((fd = servers_fd(servers, rset)) != -1)
+		if ((fd = servers_fd(servers, backup_rset)) != -1)
 		{
 			// accept connection and create socket for the connection
-			accept_connection(clients, fd);
+			
 		}
-		for(std::vector<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-			if (FD_ISSET((*it), &rset)) {
-				handle_request((*it));
-				std::vector<int>::iterator tmpIt = it - 1;
-				close((*it));
-				clients.erase(it);
-				it = tmpIt;
-				// break ;
+		for(std::vector< std::pair< Client, Request > >::iterator it = read_clients.begin(); it != read_clients.end(); it++) {
+			if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
+				// read_request and add it to the propre on
+				
+				
+				// if the request is finished add fd to writing list
+
+			}
+		}
+		for(std::vector< std::pair< Client, Request > >::iterator it = write_clients.begin(); it != write_clients.end(); it++) {
+			if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
+				// read_request and add it to the propre on
+				
+				
+				// if the request is finished add fd to writing list
+				
 			}
 		}
 	}

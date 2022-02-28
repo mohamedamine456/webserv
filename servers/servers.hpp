@@ -1,6 +1,8 @@
 #ifndef SERVERS_HPP
 #define SERVERS_HPP
 #include "../include/webserv.hpp"
+#include "Client.hpp"
+#define RECV_SIZE 4096
 
 // creation of servers
 
