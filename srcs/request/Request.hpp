@@ -72,14 +72,6 @@ class Request {
 		size_t											&getTotalread();
 };
 
-// std::ostream & operator<<( std::ostream & o, Request & rqst ) {
-// 	o << "Request:" << "\n";
-// 	o << "Method: " << rqst.getMethod() << ", Path: " << rqst.getPath() << ", Version: " << rqst.getVersion() << "\n";
-// 	std::vector< std::pair<std::string, std::string> > headers = rqst.getHeaders();
-// 	for (std::vector< std::pair<std::string, std::string> >::iterator it = headers.begin(); it != headers.end(); it++) {
-// 		o << "Key: " << it->first << ", Value: " << it->second << "\n";
-// 	}
-// 	return o;
-// }
+std::ostream & operator<<( std::ostream & o, Request & rqst );
 
 #endif

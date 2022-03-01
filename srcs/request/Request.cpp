@@ -30,39 +30,37 @@ Request	&Request::operator= ( const Request &rqst ) {
 int		Request::add_buffer( int &recvLength, char *buffer ) {
 	bool	retVal = false;
 	std::string	bufferString(buffer, recvLength);
-	if (bufferString == "")
-		return true;
-	else
-	{
-		if (this->_rqstLexer.getLineSet() == false) {
-			add_request_line(bufferString);
-		}
-		if (this->_rqstLexer.getHeadersSet() == false && this->_rqstLexer.getLineSet() == true) {
-			add_headers(bufferString);
-		}
-		if (this->_rqstLexer.getLineSet() == true && this->_rqstLexer.getHeadersSet() == true) {
-			// here test how to write in file
-			if (this->_request_type == UNKNOWN) {
-				if(this->_rqstLexer.getHeaders().find("Content-Length:") != std::string::npos)
-					this->_request_type = LENGTH;
-				else if (this->_rqstLexer.getHeaders().find("Transfer-Encoding:") != std::string::npos)
-					this->_request_type = CHUNKED;
-				else
-					this->_request_type = NONE;
-			}
-			if (this->_fileOpened == false) {
-				this->_bodyFile.open(this->_bodyfilename, std::ofstream::out);
-				this->_fileOpened = true;
-			}
-			if (this->_request_type != UNKNOWN && this->_request_type != NONE && this->_fileOpened == true) {
-				if (this->_request_type == LENGTH)
-					retVal = read_content_length(bufferString);
-				else
-					retVal = read_chunked(bufferString);
-			}
-		}
-		return retVal;
+	if (this->_rqstLexer.getLineSet() == false) {
+		add_request_line(bufferString);
 	}
+	if (this->_rqstLexer.getHeadersSet() == false && this->_rqstLexer.getLineSet() == true) {
+		add_headers(bufferString);
+	}
+	if (bufferString.empty()) {
+		retVal = true;
+	}
+	else if (this->_rqstLexer.getLineSet() == true && this->_rqstLexer.getHeadersSet() == true) {
+		// here test how to write in file
+		if (this->_request_type == UNKNOWN) {
+			if(this->_rqstLexer.getHeaders().find("Content-Length:") != std::string::npos)
+				this->_request_type = LENGTH;
+			else if (this->_rqstLexer.getHeaders().find("Transfer-Encoding:") != std::string::npos)
+				this->_request_type = CHUNKED;
+			else
+				this->_request_type = NONE;
+		}
+		if (this->_fileOpened == false) {
+			this->_bodyFile.open(this->_bodyfilename, std::ofstream::out);
+			this->_fileOpened = true;
+		}
+		if (this->_request_type != UNKNOWN && this->_request_type != NONE && this->_fileOpened == true) {
+			if (this->_request_type == LENGTH)
+				retVal = read_content_length(bufferString);
+			else
+				retVal = read_chunked(bufferString);
+		}
+	}
+	return retVal;
 }
 
 void	Request::add_request_line( std::string &buffer ) {
@@ -114,21 +112,17 @@ int											Request::read_chunked( std::string &buffer )
 
 // Setters
 
-void		Request::setMethod ( std::string &firstLine ) {
-	if (firstLine.find(' ') != std::string::npos) {
-		this->_method = firstLine.substr(0, firstLine.find(' '));;
-		// test for supported methods
-		firstLine.erase(0, firstLine.find(' ') + 1);
-	}
-	else {
-		this->_error = true;
-	}
+void		Request::setMethod ( std::string &part ) {
+	this->_method = part;
 }
 
 void		Request::setPath ( std::string &part ) {
 	if (part.find("?") != std::string::npos) {
 		this->_path = part.substr(0, part.find("?"));
 		part.erase(0, part.find("?"));
+	}
+	else {
+		this->_path = part;
 	}
 }
 
@@ -253,4 +247,14 @@ std::string		&Request::getBodyfilename () {
 
 size_t			&Request::getTotalread() {
 	return this->_totalread;
+}
+
+std::ostream & operator<<( std::ostream & o, Request & rqst ) {
+	o << "Request:" << "\n";
+	o << "Method: " << rqst.getMethod() << ", Path: " << rqst.getPath() << ", Version: " << rqst.getVersion() << "\n";
+	std::vector< std::pair<std::string, std::string> > headers = rqst.getHeaders();
+	for (std::vector< std::pair<std::string, std::string> >::iterator it = headers.begin(); it != headers.end(); it++) {
+		o << "Key: " << it->first << ", Value: " << it->second << "\n";
+	}
+	return o;
 }

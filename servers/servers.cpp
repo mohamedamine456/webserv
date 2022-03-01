@@ -69,7 +69,6 @@ void	accept_connection( std::vector< std::pair< Client, Request > > &clients, in
 	// protection for accept
 	if (clt.getClientFd() < 0) {
 		std::cerr << "Accepting Connection Failed!" << std::endl;
-		exit(EXIT_FAILURE);
 	}
 	fcntl(clt.getClientFd(), F_SETFL, O_NONBLOCK);		// check if this is the right place
 	clients.push_back(std::make_pair< Client, Request >(clt, rqst));
@@ -112,7 +111,6 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, int &ma
 		// protection for select
 		if (status < 0) {
 			std::cerr << "Select Failed!" << std::endl;
-			exit(EXIT_FAILURE);
 		}
 
 		if ((fd = servers_fd(servers, backup_rset)) != -1)
@@ -122,23 +120,18 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, int &ma
 		}
 		for(std::vector< std::pair< Client, Request > >::iterator it = read_clients.begin(); it != read_clients.end(); it++) {
 			if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
-				std::cerr << "Client FD: " << it->first.getClientFd() << std::endl;
 				// read_request and add it to the propre on
 				memset(buffer, '\0', RECV_SIZE);
-				if ((recvLength = recv(it->first.getClientFd(), buffer, RECV_SIZE, 0)) == -1) {
-					std::cerr << "Couldn't Read!" <<std::endl;
-				}
-				else {
+				if ((recvLength = recv(it->first.getClientFd(), buffer, RECV_SIZE, 0)) != -1) {
 					buffer[recvLength] = '\0';
 					// if the request is finished add fd to writing list
 					if (it->second.add_buffer(recvLength, buffer) == true) {
 						it->second.Lexer_to_parser();
-						std::cerr << "Request:" << "\n";
-						std::cerr << "Method: " << it->second.getMethod() << ", Path: " << it->second.getPath() << ", Version: " << it->second.getVersion() << "\n";
-						std::vector< std::pair<std::string, std::string> > headers = it->second.getHeaders();
-						for (std::vector< std::pair<std::string, std::string> >::iterator tt = headers.begin(); tt != headers.end(); tt++) {
-							std::cerr << "Key: " << tt->first << ", Value: " << tt->second << "\n";
-						}
+						std::cerr << it->second;
+						write_clients.push_back(std::make_pair(it->first, it->second));
+						std::vector< std::pair< Client, Request > >::iterator tmpIt = it - 1;
+						read_clients.erase(it);
+						it = tmpIt;
 					}
 				}
 			}
@@ -146,8 +139,8 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, int &ma
 		for(std::vector< std::pair< Client, Request > >::iterator it = write_clients.begin(); it != write_clients.end(); it++) {
 			if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
 				// write part from response
-				
-				
+				send_simple_response(it->first.getClientFd());
+				close(it->first.getClientFd());
 				// if the response is finished remove the fd if connection not to keep alive
 				
 			}
