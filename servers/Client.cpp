@@ -9,10 +9,10 @@ Client::~Client() {
 
 }
 
-int					Client::getClientFd () const {
+int					&Client::getClientFd () {
 	return (this->clientFd);
 }
 
-struct sockaddr_in	Client::getClientAddress () const {
+struct sockaddr_in	&Client::getClientAddress () {
 	return (this->clientAddress);
 }

@@ -6,6 +6,12 @@
 #include <utility>
 #include <fstream>
 #include "Utils.hpp"
+#include "RequestLexer.hpp"
+
+#define UNKNOWN 0
+#define LENGTH 1
+#define CHUNKED 2
+#define NONE 3
 
 class Request {
     private:
@@ -22,9 +28,13 @@ class Request {
 		std::ofstream									_bodyFile;
 		bool											_fileOpened;
 		size_t											_totalread;
+		size_t											_contentLength;
+		int												_request_type;
 		bool											_error;
 
 		// private methods
+		int												read_content_length( std::string &buffer );
+		int												read_chunked( std::string &buffer );
 	public:
 		Request ();
 		Request ( const Request &rqst );
@@ -35,17 +45,19 @@ class Request {
 		void											add_request_line ( std::string &buffer );
 		void											add_headers ( std::string &buffer );
 		// Setters
-		void											setMethod ( std::string &firstLine );
-		void											setPath ( std::string &firstLine );
-		void											setQueryString ( std::string &firstLine );
-		void											setVersion ( std::string &firstLine );
+		void											setMethod ( std::string &part );
+		void											setPath ( std::string &part );
+		void											setQueryString ( std::string &part );
+		void											setVersion ( std::string &part );
 		void											setHostHeaders();
 		void											setHost ( std::string hostString );
 		void											setPort ( std::string  portString );
+		void											setHeaders ();
 		void											addHeader ( std::string header );
-		void											setHeaders ( std::vector<std::string> &headers );
 		void											setBodyfile ( std::string filename );
-	
+
+		// Lexer to parser
+		void											Lexer_to_parser ();
 		
 		// Getters
 		RequestLexer									&getRequestLexer();
@@ -59,5 +71,15 @@ class Request {
 		std::string										&getBodyfilename ();
 		size_t											&getTotalread();
 };
+
+// std::ostream & operator<<( std::ostream & o, Request & rqst ) {
+// 	o << "Request:" << "\n";
+// 	o << "Method: " << rqst.getMethod() << ", Path: " << rqst.getPath() << ", Version: " << rqst.getVersion() << "\n";
+// 	std::vector< std::pair<std::string, std::string> > headers = rqst.getHeaders();
+// 	for (std::vector< std::pair<std::string, std::string> >::iterator it = headers.begin(); it != headers.end(); it++) {
+// 		o << "Key: " << it->first << ", Value: " << it->second << "\n";
+// 	}
+// 	return o;
+// }
 
 #endif

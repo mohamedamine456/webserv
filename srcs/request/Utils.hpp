@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <fcntl.h>
-#include "../../include/webserv.hpp"
+#include "../../servers/SocketInfos.hpp"
 #define MAX_SERVERS 1
 #define PORT 8000
 

@@ -2,16 +2,12 @@
 #define REQUESTLEXER_HPP
 #include "Utils.hpp"
 #define RECV_SIZE 4096
-#define UNKNOWN 0
-#define LENGTH 1
-#define CHUNKED 2
 
 class RequestLexer {
 	std::string				_requestLine;
 	bool					_lineSet;
 	std::string				_headers;
 	bool					_headersSet;
-	int						_read_type;
 
 	public:
 		RequestLexer();
@@ -28,9 +24,9 @@ class RequestLexer {
 		void			setHeadersSet();
 };
 
-std::ostream & operator<<( std::ostream & o, RequestLexer & rqstLexer ) {
-	o << "Request Line: " << rqstLexer.getRequestLine() << " Headers:\n" << rqstLexer.getHeaders();
-	return o;
-}
+// std::ostream & operator<<( std::ostream & o, RequestLexer & rqstLexer ) {
+// 	o << "Request Line: " << rqstLexer.getRequestLine() << " Headers:\n" << rqstLexer.getHeaders();
+// 	return o;
+// }
 
 #endif

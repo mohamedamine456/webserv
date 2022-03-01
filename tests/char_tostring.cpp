@@ -27,5 +27,11 @@ int main()
     std::cout << std::setw(25) << "concat.c_str(): ";
     std::cout.write(concat.c_str(), concat.length());
     std::cout << "|" << std::endl;
+    std::string &reference = copy;
+    std::string ref_copy = reference;
+    ref_copy.resize(25);
+    std::cout << std::setw(25) << "copy: " << copy << "|" << std::endl;
+    std::cout << std::setw(25) << "reference: " << reference << "|" << std::endl;
+    std::cout << std::setw(25) << "reference copy: " << ref_copy << "|" << std::endl;
     return (0);
 }
