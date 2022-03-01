@@ -58,6 +58,23 @@ int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
 	return (fd);
 }
 
+void	accept_connection( std::vector< std::pair< Client, Request > > &clients, int &fd )
+{
+	// New Connection configuration
+	socklen_t stor_size = sizeof(struct sockaddr_in);
+	Client clt;
+	Request	rqst;
+
+	clt.getClientFd() = accept(fd, (struct sockaddr *)&(clt.getClientAddress()), &stor_size);
+	// protection for accept
+	if (clt.getClientFd() < 0) {
+		std::cerr << "Accepting Connection Failed!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	// fcntl(newSockfd, F_SETFL, O_NONBLOCK);		// check if this is the right place
+	clients.push_back(std::make_pair< Client, Request >(clt, rqst));
+}
+
 void	send_simple_response(int &newSockfd)
 {
 	std::string str_send = "HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 7\n\nHello!\n";
@@ -66,6 +83,7 @@ void	send_simple_response(int &newSockfd)
 
 void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, int &maxfd ) {
 	char										buffer[RECV_SIZE + 1];	// buffer for read
+	int											recvLength = 0;
 	std::vector< std::pair< Client, Request > >	read_clients;
 	std::vector< std::pair< Client, Request > >	write_clients;
 
@@ -91,23 +109,29 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, int &ma
 		if ((fd = servers_fd(servers, backup_rset)) != -1)
 		{
 			// accept connection and create socket for the connection
-			
+			accept_connection(read_clients, fd);
 		}
 		for(std::vector< std::pair< Client, Request > >::iterator it = read_clients.begin(); it != read_clients.end(); it++) {
 			if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
 				// read_request and add it to the propre on
-				
-				
-				// if the request is finished add fd to writing list
+				memset(buffer, '\0', RECV_SIZE);
+				if (recvLength = recv(it->first.getClientFd(), buffer, RECV_SIZE, 0) == -1) {
+					std::cerr << "Couldn't Read!" <<std::endl;
+				}
+				else {
+					// if the request is finished add fd to writing list
+					if (it->second.add_buffer(recvLength, buffer) == true) {
 
+					}
+				}
 			}
 		}
 		for(std::vector< std::pair< Client, Request > >::iterator it = write_clients.begin(); it != write_clients.end(); it++) {
 			if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
-				// read_request and add it to the propre on
+				// write part from response
 				
 				
-				// if the request is finished add fd to writing list
+				// if the response is finished remove the fd if connection not to keep alive
 				
 			}
 		}

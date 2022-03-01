@@ -31,9 +31,9 @@ class Request {
 		~Request ();
 		Request											&operator= ( const Request &rqst );
 		// add Buffer to right place
-		void											add_buffer( int &recvLength, char *add_buffer );
-		void											check_requestLine();
-		void											check_headers();
+		int												add_buffer ( int &recvLength, char *add_buffer );
+		void											add_request_line ( std::string &buffer );
+		void											add_headers ( std::string &buffer );
 		// Setters
 		void											setMethod ( std::string &firstLine );
 		void											setPath ( std::string &firstLine );

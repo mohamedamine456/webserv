@@ -25,47 +25,46 @@ Request	&Request::operator= ( const Request &rqst ) {
 }
 
 // add Buffer to right place
-void	Request::add_buffer( int &recvLength, char *buffer ) {
+int		Request::add_buffer( int &recvLength, char *buffer ) {
+	std::string	bufferString(buffer, recvLength);
 	if (this->_rqstLexer.getLineSet() == false) {
-		this->_rqstLexer.getRequestLine().resize(this->_rqstLexer.getRequestLine().length() + recvLength);
-		this->_rqstLexer.getRequestLine().append(buffer, recvLength);
+		add_request_line(bufferString);
 	}
-	else if (this->_rqstLexer.getHeadersSet() == false) {
-		this->_rqstLexer.getHeaders().resize(this->_rqstLexer.getHeaders().length() + recvLength);
-		this->_rqstLexer.getHeaders().append(buffer, recvLength);
+	if (this->_rqstLexer.getHeadersSet() == false && this->_rqstLexer.getLineSet() == true) {
+		add_headers(bufferString);
+	}
+	if (this->_rqstLexer.getLineSet() == true && this->_rqstLexer.getHeadersSet() == true) {
+		// here choose how to write in file
+		// if (this->_fileOpened == false)
+		// 	this->_bodyFile.open(this->_bodyfilename, std::ofstream::out);
+		// this->_bodyFile.write(buffer, recvLength);
+	}
+	return false;
+}
+
+void	Request::add_request_line( std::string &buffer ) {
+	size_t	found;
+	if ((found = buffer.find("\r\n")) != std::string::npos)
+	{
+		this->_rqstLexer.getRequestLine() += buffer.substr(0, found);
+		buffer = buffer.substr(found + 2);
+		this->_rqstLexer.setLineSet();
 	}
 	else {
-		if (this->_fileOpened == false)
-			this->_bodyFile.open(this->_bodyfilename, std::ofstream::out);
-		this->_bodyFile.write(buffer, recvLength);
+		this->_rqstLexer.getRequestLine() += buffer;
 	}
 }
 
-void	Request::check_requestLine() {
+void	Request::add_headers( std::string &buffer ) {
 	size_t	found;
-	if (this->_rqstLexer.getLineSet() == false) {
-		if ((found = this->_rqstLexer.getHeaders().find("\r\n")) != std::string::npos)
-		{
-			this->_rqstLexer.getHeaders().resize(this->_rqstLexer.getHeaders().length() + this->_rqstLexer.getHeaders().length() - found - 2);
-			this->_rqstLexer.getHeaders().append(this->_rqstLexer.getRequestLine(), found + 2, this->_rqstLexer.getRequestLine().length() - found - 2);
-			this->_rqstLexer.getRequestLine().resize(found);
-			this->_rqstLexer.setLineSet();
-		}
+	if ((found = buffer.find("\r\n\r\n")) != std::string::npos)
+	{
+		this->_rqstLexer.getHeaders() += buffer.substr(0, found);
+		buffer = buffer.substr(found + 4);
+		this->_rqstLexer.setHeadersSet();
 	}
-}
-
-void	Request::check_headers() {
-	size_t	found;
-	if (this->_rqstLexer.getHeadersSet() == false) {
-		if ((found = this->_rqstLexer.getHeaders().find("\r\n\r\n")) != std::string::npos)
-		{
-			this->_bodyFile.open(this->_bodyfilename, std::ofstream::out);
-			this->_fileOpened = true;
-			this->_bodyFile.write(this->_rqstLexer.getHeaders().c_str() + found + 4, this->_rqstLexer.getHeaders().length() - found - 4);
-			this->_totalread += this->_rqstLexer.getHeaders().length() - found - 4;
-			this->_rqstLexer.getHeaders().resize(found);
-			this->_rqstLexer.setHeadersSet();
-		}
+	else {
+		this->_rqstLexer.getHeaders() += buffer;
 	}
 }
 

@@ -17,8 +17,8 @@ class Client {
 		~Client();
 
 		// Getters
-		int					getClientFd () const;
-		struct sockaddr_in	getClientAddress () const;
+		int					&getClientFd ();
+		struct sockaddr_in	&getClientAddress ();
 };
 
 #endif

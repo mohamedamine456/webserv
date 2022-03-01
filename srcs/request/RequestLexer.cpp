@@ -5,6 +5,7 @@ RequestLexer::RequestLexer() {
 	this->_headers = "";
 	this->_lineSet = false;
 	this->_headersSet = false;
+	this->_read_type = UNKNOWN;
 }
 
 RequestLexer::~RequestLexer() {
