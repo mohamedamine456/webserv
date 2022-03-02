@@ -154,6 +154,7 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, fd_set 
 				close(it->first.getClientFd());
 				// if the response is finished remove the fd if connection not to keep alive
 				std::vector< std::pair< Client, Request > >::iterator tmpIt = it - 1;
+				std::cout << "Response Send\n";
 				write_clients.erase(it);
 				it = tmpIt;
 			}
