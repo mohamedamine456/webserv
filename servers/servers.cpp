@@ -1,5 +1,10 @@
 #include "servers.hpp"
 
+/*
+ * This Function  create sockets for servers, set them to non-block mood,
+ * configure the port, bind them and listen
+ */
+
 int		create_servers( std::vector< Server > &servers ) {
 	std::vector<int>    bound;
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
@@ -30,6 +35,9 @@ int		create_servers( std::vector< Server > &servers ) {
 	return (0);
 }
 
+/*
+ * This Function add all lunched servers to the select read_set
+ */
 void	add_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 	// to remove all file descriptors from the the set rfds
 	FD_ZERO(&rfds);
@@ -44,21 +52,12 @@ void	add_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 	}
 }
 
-int		servers_fd( std::vector<Server> &servers, fd_set &rset ) {
+/*
+ * Accept a connection on a server add new client
+ * and mapped request to the read_client vector
+ */
 
-	int fd = -1;
-	// loop over all fds after select said the a fd is ready for read
-	// to see which fd is ready for read using FD_ISSET
-	for (unsigned int i = 0; i < servers.size(); i++) {
-		if (FD_ISSET(servers[i].get_socketInfos().getSocketFd(), &rset)) {
-			fd = servers[i].get_socketInfos().getSocketFd();
-			break ;
-		}
-	}
-	return (fd);
-}
-
-void	accept_connection( std::vector< std::pair< Client, Request > > &clients, int &fd )
+void	accept_connection( std::vector< std::pair< Client, Request > > &read_clients, int &fd )
 {
 	// New Connection configuration
 	socklen_t stor_size = sizeof(struct sockaddr_in);
@@ -71,7 +70,21 @@ void	accept_connection( std::vector< std::pair< Client, Request > > &clients, in
 		std::cerr << "Accepting Connection Failed!" << std::endl;
 	}
 	fcntl(clt.getClientFd(), F_SETFL, O_NONBLOCK);		// check if this is the right place
-	clients.push_back(std::make_pair< Client, Request >(clt, rqst));
+	read_clients.push_back(std::make_pair< Client, Request >(clt, rqst));
+}
+
+/*
+ * loop over all servers fds after select return fds are ready for read
+ * to see which fd is ready for accepting connection using FD_ISSET
+ */
+
+void	accept_connections( std::vector<Server> &servers, std::vector< std::pair< Client, Request > > &read_clients, fd_set &backup_rset ) {
+
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+		if (FD_ISSET(it->get_socketInfos().getSocketFd(), &backup_rset) ) {
+			accept_connection(read_clients, it->get_socketInfos().getSocketFd());
+		}
+	}
 }
 
 void	add_read_clients( std::vector< std::pair< Client, Request > > &clients, fd_set &rset, int &maxfd )
@@ -162,11 +175,7 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, fd_set 
 			std::cerr << "Select Failed!" << std::endl;
 		}
 
-		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-			if (FD_ISSET(it->get_socketInfos().getSocketFd(), &backup_rset) ) {
-				accept_connection(read_clients, it->get_socketInfos().getSocketFd());
-			}
-		}
+		accept_connections(servers, read_clients, backup_rset);
 		handle_clients_requests(read_clients, write_clients, backup_rset);
 		handle_clients_responses(write_clients, backup_rset);
 	}
