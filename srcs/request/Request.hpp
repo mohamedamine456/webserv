@@ -16,7 +16,7 @@
 class Request {
     private:
         typedef std::pair<std::string, std::string>		string_pair;
-		RequestLexer									_rqstLexer;
+		RequestLexer									_rqstLexer;			// Reading Only
 		std::string										_method;
 		std::string										_path;
 		std::string										_query_string;
@@ -26,10 +26,10 @@ class Request {
         std::vector<string_pair>						_headers;
 		std::string										_bodyfilename;
 		std::ofstream									_bodyFile;
-		bool											_fileOpened;
-		size_t											_totalread;
-		size_t											_contentLength;
-		int												_request_type;
+		bool											_fileOpened;		// Reading Only
+		size_t											_totalread;			// Reading Only
+		size_t											_contentLength;		// Reading Only
+		int												_request_type;		// Reading Only
 		bool											_error;
 
 		// private methods

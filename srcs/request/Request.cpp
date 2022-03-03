@@ -100,8 +100,11 @@ int											Request::read_content_length( std::string &buffer )
 	}
 	this->_totalread += buffer.length();
 	this->_bodyFile.write(buffer.c_str(), buffer.length());
-	if (this->_totalread >= this->_contentLength)
+	if (this->_totalread >= this->_contentLength) 
+	{
+		this->_bodyFile.close();
 		return true ;
+	}
 	return false;
 }
 

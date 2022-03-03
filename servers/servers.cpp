@@ -60,9 +60,9 @@ void	add_servers( std::vector<Server> &servers, fd_set &rfds, int &maxfd ) {
 void	accept_connection( std::vector< std::pair< Client, Request > > &read_clients, int &fd )
 {
 	// New Connection configuration
-	socklen_t stor_size = sizeof(struct sockaddr_in);
-	Client clt;
-	Request	rqst;
+	socklen_t	stor_size = sizeof(struct sockaddr_in);
+	Client		clt;
+	Request		 rqst;
 
 	clt.getClientFd() = accept(fd, (struct sockaddr *)&(clt.getClientAddress()), &stor_size);
 	// protection for accept
@@ -136,10 +136,10 @@ void	send_simple_response(int &newSockfd)
 	send(newSockfd, str_send.c_str(), strlen(str_send.c_str()), 0);
 }
 
-void	handle_clients_responses(std::vector< std::pair< Client, Request > > &write_clients, fd_set &backup_rset)
+void	handle_clients_responses(std::vector< std::pair< Client, Request > > &write_clients, fd_set &backup_wset)
 {
 	for(std::vector< std::pair< Client, Request > >::iterator it = write_clients.begin(); it != write_clients.end(); it++) {
-		if (FD_ISSET(it->first.getClientFd(), &backup_rset)) {
+		if (FD_ISSET(it->first.getClientFd(), &backup_wset)) {
 			// write part from response
 			send_simple_response(it->first.getClientFd());
 			close(it->first.getClientFd());
@@ -174,9 +174,11 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, fd_set 
 		if (status < 0) {
 			std::cerr << "Select Failed!" << std::endl;
 		}
-
+		// if the fd is between servers fds accept new connection
 		accept_connections(servers, read_clients, backup_rset);
+		// if the fd is between read_clients fds accept read request
 		handle_clients_requests(read_clients, write_clients, backup_rset);
-		handle_clients_responses(write_clients, backup_rset);
+		// if the fd is between write_client fds write response
+		handle_clients_responses(write_clients, backup_wset);
 	}
 }
