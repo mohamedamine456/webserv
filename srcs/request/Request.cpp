@@ -91,7 +91,7 @@ void	Request::add_headers( std::string &buffer ) {
 }
 
 
-int											Request::read_content_length( std::string &buffer )
+bool		Request::read_content_length( std::string &buffer )
 {
 	if (this->_contentLength == 0) {
 		size_t found = this->_rqstLexer.getHeaders().find("Content-Length:");
@@ -102,15 +102,65 @@ int											Request::read_content_length( std::string &buffer )
 	this->_bodyFile.write(buffer.c_str(), buffer.length());
 	if (this->_totalread >= this->_contentLength) 
 	{
+		std::cerr << "End Length." << std::endl;
 		this->_bodyFile.close();
 		return true ;
 	}
 	return false;
 }
 
-int											Request::read_chunked( std::string &buffer )
+void	Request::getChunkSize()
 {
-	(void)buffer;
+	std::string number;
+	int	i = 0;
+	for (std::string::iterator it = _chunked.begin(); it != _chunked.end(); it++)
+	{
+		if (isHex((*it)) == false)
+			break;
+		number += *it;
+		i++;
+	}
+	this->_chunked.erase(0, i + 2);
+	std::istringstream(number) >> std::hex >> this->_totalread;
+}
+
+bool		Request::read_chunked( std::string &buffer )
+{
+	this->_chunked += buffer;
+	while (!this->_chunked.empty()) {
+		if (this->_totalread == 0) {
+			getChunkSize();
+			if (this->_totalread != 0) {
+				if (this->_totalread > this->_chunked.length()) {
+					this->_bodyFile.write(this->_chunked.c_str(), this->_chunked.length());
+					this->_totalread -= this->_chunked.length();
+					this->_chunked.erase(0, this->_chunked.length());
+					return false;
+				}
+				else {
+					this->_bodyFile.write(this->_chunked.c_str(), this->_totalread);
+					this->_chunked.erase(0, this->_totalread + 4);
+					this->_totalread = 0;
+				}
+			}
+			else {
+				return true;
+			}
+		}
+		else {
+			if (this->_totalread > this->_chunked.length()) {
+				this->_bodyFile.write(this->_chunked.c_str(), this->_chunked.length());
+				this->_totalread -= this->_chunked.length();
+				this->_chunked.erase(0, this->_chunked.length());
+				return false;
+			}
+			else {
+				this->_bodyFile.write(this->_chunked.c_str(), this->_totalread);
+				this->_chunked.erase(0, this->_totalread + 4);
+				this->_totalread = 0;
+			}
+		}
+	}
 	return false;
 }
 
