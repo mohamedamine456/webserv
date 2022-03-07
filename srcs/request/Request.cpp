@@ -4,14 +4,21 @@ Request::Request (): _error(false) {
 	this->_bodyfilename = "/var/tmp/request_" + randomfilename("") + "_body";
 	this->_request_type = UNKNOWN;
 	this->_contentLength = 0;
+	this->_totalread = 0;
 	this->_fileOpened = false;
 }
 
 Request::Request (const Request &rqst ) {
 	*this = rqst;
+	this->_request_type = UNKNOWN;
+	this->_contentLength = 0;
+	this->_totalread = 0;
+	this->_fileOpened = false;
 }
 
-Request::~Request () {}
+Request::~Request () {
+	this->_bodyfilename = "";
+}
 
 Request	&Request::operator= ( const Request &rqst ) {
 	this->_method = rqst._method;
@@ -102,7 +109,6 @@ bool		Request::read_content_length( std::string &buffer )
 	this->_bodyFile.write(buffer.c_str(), buffer.length());
 	if (this->_totalread >= this->_contentLength) 
 	{
-		std::cerr << "End Length." << std::endl;
 		this->_bodyFile.close();
 		return true ;
 	}
@@ -144,6 +150,7 @@ bool		Request::read_chunked( std::string &buffer )
 				}
 			}
 			else {
+				this->_bodyFile.close();
 				return true;
 			}
 		}
