@@ -126,8 +126,14 @@ void	Request::getChunkSize()
 		number += *it;
 		i++;
 	}
-	this->_chunked.erase(0, i + 2);
-	std::istringstream(number) >> std::hex >> this->_totalread;
+	if (!number.empty())
+	{
+		std::istringstream(number) >> std::hex >> this->_totalread;
+		if (this->_totalread == 0)
+			this->_chunked.erase(0, i + 4);
+		else
+			this->_chunked.erase(0, i + 2);
+	}
 }
 
 bool		Request::read_chunked( std::string &buffer )
@@ -145,11 +151,11 @@ bool		Request::read_chunked( std::string &buffer )
 				}
 				else {
 					this->_bodyFile.write(this->_chunked.c_str(), this->_totalread);
-					this->_chunked.erase(0, this->_totalread + 4);
+					this->_chunked.erase(0, this->_totalread + 2);
 					this->_totalread = 0;
 				}
 			}
-			else {
+			else if (this->_chunked.empty()) {
 				this->_bodyFile.close();
 				return true;
 			}
@@ -163,7 +169,7 @@ bool		Request::read_chunked( std::string &buffer )
 			}
 			else {
 				this->_bodyFile.write(this->_chunked.c_str(), this->_totalread);
-				this->_chunked.erase(0, this->_totalread + 4);
+				this->_chunked.erase(0, this->_totalread + 2);
 				this->_totalread = 0;
 			}
 		}
