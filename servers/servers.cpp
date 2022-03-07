@@ -107,6 +107,7 @@ void	add_write_clients( std::vector< std::pair< Client, Request > > &clients, fd
 
 void	handle_clients_requests( std::vector< std::pair< Client, Request > > &read_clients,
 		std::vector< std::pair< Client, Request > > &write_clients, fd_set &backup_rset) {
+	// static int o = 0;
 	char										buffer[RECV_SIZE + 1];	// buffer for read
 	int											recvLength = 0;
 	for(std::vector< std::pair< Client, Request > >::iterator it = read_clients.begin(); it != read_clients.end(); it++) {
@@ -115,6 +116,8 @@ void	handle_clients_requests( std::vector< std::pair< Client, Request > > &read_
 			memset(buffer, '\0', RECV_SIZE);
 			if ((recvLength = recv(it->first.getClientFd(), buffer, RECV_SIZE, 0)) != -1) {
 				buffer[recvLength] = '\0';
+				// std::cerr << "DATA: " << o++ << std::endl;
+				// std::cerr.flush();
 				// if the request is finished add fd to writing list
 				if (it->second.add_buffer(recvLength, buffer) == true) {
 					it->second.Lexer_to_parser();

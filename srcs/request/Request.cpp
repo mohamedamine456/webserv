@@ -129,10 +129,14 @@ void	Request::getChunkSize()
 	if (!number.empty())
 	{
 		std::istringstream(number) >> std::hex >> this->_totalread;
-		if (this->_totalread == 0)
+		if (this->_totalread != 0) {
+			if (this->_chunked[i] == '\r' && this->_chunked[i + 1] == '\n')
+				this->_chunked.erase(0, i + 2);
+			else
+				this->_chunked.erase(0, i);
+		}
+		else 
 			this->_chunked.erase(0, i + 4);
-		else
-			this->_chunked.erase(0, i + 2);
 	}
 }
 
