@@ -42,7 +42,7 @@ int main()
 
     while (1)
     {
-        std::cout << "Waiting for connection..." << std::endl;
+        // std::cout << "Waiting for connection..." << std::endl;
         socklen_t   sin_size = sizeof(struct sockaddr_in);
         new_socket = accept(server_fd, (struct sockaddr *)&address, &sin_size);
         if (new_socket == -1)
@@ -54,7 +54,7 @@ int main()
         char buffer[1024] = {0};
 
         int valread = read(new_socket, buffer, 1024);
-        std::cout << buffer;
+        // std::cout << buffer;
 
         if (valread < 0) {
             std::cout << "No Bytes are there to read" << std::endl;
@@ -62,7 +62,7 @@ int main()
 
         char *server_msg = (char *)"HTTP/1.1 200 OK\nServer: Test Server\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
         write(new_socket, server_msg, strlen(server_msg));
-        std::cout << "Closing Connection..." << std::endl;
+        // std::cout << "Closing Connection..." << std::endl;
         close(new_socket);
     }
     return (0);

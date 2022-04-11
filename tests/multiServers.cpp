@@ -9,20 +9,11 @@
 #include <fstream>
 #include <cstdio>
 #include <fcntl.h>
-#include "request/Request.hpp"
-#include "servers/SocketInfos.hpp"
+#include "../srcs/request/Request.hpp"
+#include "../servers/SocketInfos.hpp"
 
 #define MAX_SERVERS 10
 #define PORT 8000
-
-std::string randomfilename(std::string str) {
-	static int a = 1;
-	time_t ttime = std::time(0);
-	std::string filename(std::to_string(ttime));
-	filename.insert(filename.length(), std::to_string(a));
-	a++;
-	return (filename);
-}
 
 Request	read_request(int &newSockfd) {
 	Request				rqst;
@@ -30,14 +21,14 @@ Request	read_request(int &newSockfd) {
 	char				buffer[1024];									// request reading buffer
 	std::string			filename = "/var/tmp/request_" + randomfilename("");
 	std::ofstream		rqstFile(filename, std::ofstream::out);
-	std::cout << "Receiving:" << std::endl;
+	// std::cout << "Receiving:" << std::endl;
 	while ((recvLength = recv(newSockfd, &buffer, 1024, 0)) == 1024) {
 		buffer[recvLength] = '\0';
 		rqstFile << buffer;
 	}
 	buffer[recvLength] = '\0';
 	rqstFile << buffer;
-	std::cout << filename << "\n";
+	// std::cout << filename << "\n";
 	remove(filename.c_str());
 	return rqst;
 }
@@ -83,7 +74,7 @@ void	handle_request(int newSockfd)
 {
 	Request rqst = read_request(newSockfd);						// read request
 	send_simple_response(newSockfd);							// to prevent multi request from mozilla
-	std::cout << "End Reading!" << std::endl;
+	// std::cout << "End Reading!" << std::endl;
 	close(newSockfd);
 }
 
