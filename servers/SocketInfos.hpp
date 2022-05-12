@@ -19,7 +19,7 @@ class SocketInfos {
 		~SocketInfos();
 
 		int		createSocket ();
-		void	setSocketAddress ( int port );
+		void	setSocketAddress ( int port, std::string host );
 		int		bindSocket () const;
 		int		listenSocket () const;
 

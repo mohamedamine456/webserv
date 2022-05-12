@@ -6,7 +6,7 @@
 #    By: abelarif <abelarif@student.1337.ma>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/02/02 21:33:12 by abelarif          #+#    #+#              #
-#    Updated: 2022/02/18 16:42:30 by abelarif         ###   ########.fr        #
+#    Updated: 2022/04/27 17:54:38 by mlachheb         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,18 +17,22 @@ SERVER_SRCS=	./servers/servers.cpp\
 				./servers/Client.cpp\
 
 REQUEST_SRCS=	./srcs/request/Request.cpp\
-				./srcs/request/requestHandler.cpp\
 				./srcs/request/Utils.cpp\
 				./srcs/request/RequestLexer.cpp\
 
-RESPONSE_SRCS=	./srcs/response/responseHandler.cpp\
+RESPONSE_SRCS=	./srcs/response/Response.Class.cpp\
+				./srcs/response/CGI.Class.cpp\
 
 PARSING_SRCS=	./srcs/confParsing/fileHandlerUtils.cpp\
 				./srcs/confParsing/confParsing.cpp\
 				./srcs/confParsing/positionHandler.cpp\
 				./srcs/confParsing/fillData.cpp\
+				./srcs/confParsing/Server.Class.cpp\
+				./srcs/confParsing/Location.Class.cpp\
 
 UTILS_SRCS=		./srcs/utils/errorStream.cpp\
+				./srcs/utils/MimeTypes.Class.cpp\
+				./srcs/utils/autoindex.Class.cpp\
 
 SRCS=   		main.cpp\
 				$(PARSING_SRCS)\
@@ -39,16 +43,12 @@ SRCS=   		main.cpp\
 
 OBJS=   $(SRCS:.cpp=.o)
 
-CPPFLAGS =   -std=c++98 -Wall -Werror -Wextra
-DEBUG =		 -std=c++98 -g3 -Wall -Werror -Wextra 
+CPPFLAGS= -Wall -Werror -Wextra -std=c++98
 
 $(NAME):	$(OBJS)
-		clang++ $(CPPFLAGS) $(OBJS) -o $(NAME)
+			clang++ $(CPPFLAGS) $(OBJS) -o $(NAME)
 
 all: $(NAME)
-
-debug: $(OBJS)
-	clang++ -g $(DEBUG) $(OBJS) -o $(NAME)
 
 clean:
 	rm -rf $(OBJS)

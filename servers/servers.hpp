@@ -1,7 +1,13 @@
 #ifndef SERVERS_HPP
 #define SERVERS_HPP
-#include "../include/webserv.hpp"
+
+#include "Utils.hpp"
 #include "Client.hpp"
+
+/*
+** SIZE TO READ FROM SOCKET: **************************************************************
+*/
+
 #define RECV_SIZE 4096
 
 // creation of servers

@@ -4,11 +4,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <cstring>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <iostream>
 
-class Client {
+class Client
+{
 	private:
 		int					clientFd;
 		struct sockaddr_in	clientAddress;
@@ -17,8 +19,8 @@ class Client {
 		~Client();
 
 		// Getters
-		int					&getClientFd ();
 		struct sockaddr_in	&getClientAddress ();
+		int					&getClientFd ();
 };
 
 #endif

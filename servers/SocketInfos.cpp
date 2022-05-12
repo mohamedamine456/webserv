@@ -14,19 +14,25 @@ int		SocketInfos::createSocket () {
 	if (this->socketFd == -1) {
 		return (-1);
 	}
-	// if(fcntl(this->socketFd, F_SETFL, O_NONBLOCK) < 0) {
-	// 	return (-1);
-	// }
 	return (0);
 }
 
-void	SocketInfos::setSocketAddress ( int port ) {
+void	SocketInfos::setSocketAddress ( int port, std::string host ) {
 	this->socketAddress.sin_family = AF_UNSPEC;
-	this->socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (host.compare("") == 0) {
+		this->socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+	} else {
+		if (host.compare("localhost") == 0) {
+			host = "127.0.0.1";
+		}
+		this->socketAddress.sin_addr.s_addr = inet_addr(host.c_str());
+	}
 	this->socketAddress.sin_port = htons(port);
 }
 
 int		SocketInfos::bindSocket () const {
+	int one = 1;
+	setsockopt(this->socketFd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 	if (bind(this->socketFd, (struct sockaddr *)&(this->socketAddress), sizeof(this->socketAddress)) == -1) {
 		return (-1);
 	}
@@ -34,7 +40,7 @@ int		SocketInfos::bindSocket () const {
 }
 
 int		SocketInfos::listenSocket () const {
-	if (listen(this->socketFd, 100) < 0) {
+	if (listen(this->socketFd, SOMAXCONN) < 0) {
 		return (-1);
 	}
 	return (0);

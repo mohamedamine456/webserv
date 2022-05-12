@@ -26,9 +26,4 @@ class RequestLexer {
 		void			setHeadersSet();
 };
 
-// std::ostream & operator<<( std::ostream & o, RequestLexer & rqstLexer ) {
-// 	o << "Request Line: " << rqstLexer.getRequestLine() << " Headers:\n" << rqstLexer.getHeaders();
-// 	return o;
-// }
-
 #endif

@@ -6,7 +6,7 @@
 /*   By: abelarif <abelarif@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/02 21:22:45 by abelarif          #+#    #+#             */
-/*   Updated: 2022/02/19 19:02:04 by abelarif         ###   ########.fr       */
+/*   Updated: 2022/04/26 06:12:58 by abelarif         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,13 @@
 #include <iostream>
 #include <vector>
 
-#include "../servers/SocketInfos.hpp"
-
 /*
 ** DEFAULT CONFIGFILE: *********************************************************
 ** No write permission: -r--r--r--  conf/default.conf
 */
 # define DFLTCONF   "./conf/default.conf"
+
+#include "../servers/SocketInfos.hpp"
 
 /*
 ** CONFIGFILE  KEYWORDS: *******************************************************
@@ -39,10 +39,14 @@
 # define KW_AUTOINDEX           "autoindex"             //  Turn on or off directory listing
 # define KW_DEFAULT_FILE        "index"                 //  Default file to answer if the request is a directory
 # define KW_LOCATION            "location"              //  Define a directory or a file from where the file should be search
+# define KW_CGI                 "cgi"                   //
 # define KW_LOCATION_ROOT       "root"                  //  The KW_LOCATION is rooted to KW_LOCATION_ROOT
+# define KW_REDIRECTION         "redirection"           //  Redireciont from /path to /another_path
+# define KW_UPLOAD_PATH         "upload_path"           //
+# define KW_CGI_PATH            "cgi_path"              //
 
 # define KW_CLOSED_BRACKET            9000
-# define KW_SERVER_VALUE              9001          
+# define KW_SERVER_VALUE              9001
 # define KW_SERVER_NAME_VALUE         9002
 # define KW_ERR_PAGE_VALUE            9003
 # define KW_CLIENT_BODY_SIZE_VALUE    9004
@@ -52,13 +56,16 @@
 # define KW_LOCATION_VALUE            9008
 # define KW_LOCATION_ROOT_VALUE       9009
 # define KW_LISTEN_VALUE              9010
+# define KW_REDIRECTION_VALUE         9011
+# define KW_UPLOAD_PATH_VALUE         9012
+# define KW_CGI_VALUE                 9013
+# define KW_CGI_PATH_VALUE            9014
 
 class ServerData
 {
 public:
     int                                                 whereAmI;
-    std::pair<std::vector<bool>, std::vector<bool> >    Bracket;    
-
+    std::pair<std::vector<bool>, std::vector<bool> >    Bracket;
     ServerData(int POSITION) : whereAmI(POSITION) {}
     ~ServerData() {}
 };
@@ -66,117 +73,56 @@ public:
 class Server
 {
 private:
-    std::vector<std::string>     _server_names;
-    std::string                  _host;
-    size_t                       _port;
-    std::string                  _root;
-    std::vector<std::string>     _index;
-    std::vector<std::string>     _methods;
-    std::vector<Location>        _location;
-    std::vector<CGI>             _CGI;
-    std::string                  _client_max_body_size;
-	SocketInfos						socketInfos;
-    // bool    validated_server_name(std::string name) {
-    //     if (name) {
-    //         // set coonditions to validate server_name ;
-    //     }
-    //     return true;
-    // }
+    std::vector<std::string>                            _server_names;
+    std::string                                         _host;
+    size_t                                              _port;
+    std::string                                         _root;
+    std::vector<std::string>                            _index;
+    std::vector<std::string>                            _methods;
+    std::vector<Location>                               _location;
+    std::vector<CGI>                                    _CGI;
+    std::string                                         _client_max_body_size;
+    std::string                                         _autoindex;
+    const std::string                                   _whoAmI;
+    SocketInfos					                        _socketInfos;
+    std::vector<std::pair<std::string, std::string> >   _redirections;
+    std::vector<std::pair<std::string, std::string> >   _error_pages;
+    std::string                                         _upload_path;
+
 public:
-    Server( void ) :    _server_names(std::vector<std::string>()),
-                        _host(""),
-                        _port(std::string::npos),
-                        _root(""),
-                        _index(std::vector<std::string>()),
-                        _methods(std::vector<std::string>()),
-                        _location(std::vector<Location>()),
-                        _CGI(std::vector<CGI>()){}
-    ~Server(){}
+
+    bool    operator==(const Server & rhs) const
+    {
+        return (
+            (_server_names == rhs._server_names) &&
+            (_host == rhs._host) &&
+            (_port == rhs._port));
+    }
+
+    Server( void );
+    Server      &operator= ( const Server & srv );
+    ~Server();
 
     //  GETTERS :
-    std::vector<std::string>     &get_server_names() { return this->_server_names; }
-    std::string                  &get_host() { return this->_host; }
-    size_t                       &get_port() { return this->_port; }
-    std::string                  &get_root() { return this->_root; }
-    std::string                  &get_client_max_body_size() { return this->_client_max_body_size; }
-    std::vector<std::string>     &get_index() { return this->_index; }
-    std::vector<std::string>     &get_methods() { return this->_methods; }
-    std::vector<Location>        &get_location() { return this->_location; }
-    std::vector<CGI>             &get_CGI() { return this->_CGI; }
-	SocketInfos					 &get_socketInfos() { return this->socketInfos; }
+    std::vector<std::string>                            &get_server_names();
+    std::string                                         &get_host();
+    size_t                                              &get_port();
+    std::string                                         &get_root();
+    std::string                                         &get_client_max_body_size();
+    std::vector<std::string>                            &get_index();
+    std::vector<std::string>                            &get_methods();
+    std::vector<Location>                               &get_location();
+    std::vector<CGI>                                    &get_CGI();
+    std::string                                         &get_autoindex();
+    std::string                                         getId() const ;
+    SocketInfos					                        &get_socketInfos();
+    std::vector<std::pair<std::string, std::string> >   &get_error_pages();
+    std::vector<std::pair<std::string, std::string> >   &get_redirections();
+    std::string                                         &get_upload_path();
 
     //  METHODS:
-    bool    setHostPort() {
-        if (this->_host.find(":") != std::string::npos) {
-            this->_port = std::stoi(this->_host.substr(this->_host.find(":") + 1));
-            this->_host = this->_host.substr(0, this->_host.find(":"));
-            return true;
-        }
-        return false;
-    }
-
-    void    dbgServer()
-    {
-        //  SERVER NAMES:
-        {
-            std::cout << "Server names: -------------------" << std::endl;
-                for (std::vector<std::string>::iterator it = _server_names.begin(); it != _server_names.end(); it++)
-                    std::cout << "[" << *it << "] ";
-                std::cout << std::endl;
-        }
-        //  HOST:
-        {
-            std::cout << "Host: ---------------------------" << std::endl;
-                std::cout << "[" << _host << "] " << std::endl;
-        }
-        //  PORT:
-        {
-            std::cout << "Port: ---------------------------" << std::endl;
-                std::cout << "[" << _port << "] " << std::endl;
-        }
-        //  ROOT:
-        {
-            std::cout << "Root: ---------------------------" << std::endl;
-                std::cout << "[" << _root << "] " << std::endl;
-        }
-        //  CLIENT_MAX_BODY_SIZE:
-        {
-            std::cout << "Client_max_body_size: ---------------------------" << std::endl;
-                std::cout << "[" << _client_max_body_size << "] " << std::endl;
-        }
-        //  INDEX:
-        {
-            std::cout << "Indexs: -------------------------" << std::endl;
-                for (std::vector<std::string>::iterator it = _index.begin(); it != _index.end(); it++)
-                    std::cout << "[" << *it << "] ";
-                std::cout << std::endl;
-        }
-        //  METHODS:
-        {
-            std::cout << "Methods: ------------------------" << std::endl;
-                for (std::vector<std::string>::iterator it = _methods.begin(); it != _methods.end(); it++) {
-                    std::cout << "[" << *it << "] ";
-                }
-            std::cout << std::endl;
-        }
-        //  LOCATIONS:
-        {
-            std::cout << "Locations: ----------------------" << std::endl;
-            for (std::vector<Location>::iterator it = _location.begin(); it != _location.end(); it++) {
-                std::cout << "\tlocations: **********************" << std::endl;
-                std::cout << "\tlocation_Path: [" << it->get_locations_path() << "]" << std::endl;
-                std::cout << "\tautoindex: [" << it->get_autoindex() << "]" << std::endl;
-                std::cout << "\tclient_max_body_size: [" << it->get_client_max_body_size() << "]" << std::endl;
-                std::cout << "\tmethods: ";
-                std::vector<std::string>::iterator methods_it = it->get_methods().begin();
-                while (methods_it != it->get_methods().end()) {
-                    std::cout << "[" << *methods_it << "] ";
-                    methods_it++;
-                }
-                std::cout << std::endl;
-            }
-        }
-    }
+    bool    setHostPort();
+    void    dbgServer();
 };
 
 #endif

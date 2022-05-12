@@ -1,31 +1,33 @@
 #include "Request.hpp"
 
-Request::Request (): _error(false) {
+Request::Request () {
 	this->_bodyfilename = "/var/tmp/request_" + randomfilename("") + "_body";
 	this->_request_type = UNKNOWN;
 	this->_contentLength = 0;
 	this->_totalread = 0;
+	this->_bodyFileFD = -1;
 	this->_fileOpened = false;
+	this->_CRLF = true;
+	this->_last_update = time(NULL);
 }
 
 Request::Request (const Request &rqst ) {
 	*this = rqst;
-	// this->_request_type = UNKNOWN;
-	// this->_contentLength = 0;
-	// this->_totalread = 0;
-	// this->_fileOpened = false;
 }
 
 Request::~Request () {
-	// remove(this->_bodyfilename.c_str());
 	this->_bodyfilename = "";
+	this->_bodyFileFD = -1;
 	this->_request_type = UNKNOWN;
 	this->_contentLength = 0;
 	this->_totalread = 0;
 	this->_fileOpened = false;
+	this->_CRLF = true;
+	this->_last_update = time(NULL);
 }
 
 Request	&Request::operator= ( const Request &rqst ) {
+	this->_rqstLexer = rqst._rqstLexer;
 	this->_method = rqst._method;
 	this->_path = rqst._path;
 	this->_query_string = rqst._query_string;
@@ -34,13 +36,15 @@ Request	&Request::operator= ( const Request &rqst ) {
 	this->_port = rqst._port;
 	this->_headers = rqst._headers;
 	this->_bodyfilename = rqst._bodyfilename;
-	this->_fileOpened = rqst._fileOpened;	
+	this->_bodyFileFD = rqst._bodyFileFD;
+	this->_fileOpened = rqst._fileOpened;
 	this->_totalread = rqst._totalread;
 	this->_contentLength = rqst._contentLength;
 	this->_request_type = rqst._request_type;
 	this->_chunked = rqst._chunked;
-	this->_error = rqst._error;
-	
+	this->_CRLF = rqst._CRLF;
+	this->_last_update = rqst._last_update;
+
 	return *this;
 }
 
@@ -54,29 +58,35 @@ int		Request::add_buffer( int &recvLength, char *buffer ) {
 	if (this->_rqstLexer.getHeadersSet() == false && this->_rqstLexer.getLineSet() == true) {
 		add_headers(bufferString);
 	}
-	if (bufferString.empty()) {
-		retVal = true;
-	}
-	else if (this->_rqstLexer.getLineSet() == true && this->_rqstLexer.getHeadersSet() == true) {
+	if (this->_rqstLexer.getLineSet() == true && this->_rqstLexer.getHeadersSet() == true) {
 		// here test how to write in file
 		if (this->_request_type == UNKNOWN) {
-			if(this->_rqstLexer.getHeaders().find("Content-Length:") != std::string::npos)
-				this->_request_type = LENGTH;
-			else if (this->_rqstLexer.getHeaders().find("Transfer-Encoding:") != std::string::npos)
+			if (this->_rqstLexer.getHeaders().find("Transfer-Encoding:") != std::string::npos)
 				this->_request_type = CHUNKED;
-			else
-				this->_request_type = NONE;
+			else if(this->_rqstLexer.getHeaders().find("Content-Length:") != std::string::npos)
+				this->_request_type = LENGTH;
+			else {
+				this->_request_type = NONE;	// Bad Request	BAD_REQUEST
+				retVal = BAD_REQUEST;
+			}
 		}
-		if (this->_fileOpened == false) {
-			this->_bodyFile.open(this->_bodyfilename, std::ofstream::out);
+		if (this->_fileOpened == false && this->_bodyFileFD == -1 && this->_request_type != UNKNOWN && this->_request_type != NONE) {
+			this->_bodyFileFD = open(this->_bodyfilename.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IWUSR | S_IRUSR);
+			if (this->_bodyFileFD == -1) {
+				std::cerr << "Couldn't Open File" << std::endl;
+			}
 			this->_fileOpened = true;
 		}
-		if (this->_request_type != UNKNOWN && this->_request_type != NONE && this->_fileOpened == true) {
-			if (this->_request_type == LENGTH)
-				retVal = read_content_length(bufferString);
-			else
-				retVal = read_chunked(bufferString);
+		if (this->_request_type == CHUNKED && this->_fileOpened == true) {
+			retVal = !read_chunked(bufferString);
 		}
+		else if (this->_request_type == LENGTH && this->_fileOpened == true) {
+			retVal = !read_content_length(bufferString);
+		}
+		this->_last_update = time(NULL);
+	}
+	if (bufferString.empty() && this->_request_type == NONE) {
+		retVal = FINISHED;
 	}
 	return retVal;
 }
@@ -107,7 +117,6 @@ void	Request::add_headers( std::string &buffer ) {
 	}
 }
 
-
 bool		Request::read_content_length( std::string &buffer )
 {
 	if (this->_contentLength == 0) {
@@ -115,20 +124,22 @@ bool		Request::read_content_length( std::string &buffer )
 		std::string content = this->_rqstLexer.getHeaders().substr(found + 16);
 		this->_contentLength = std::stol(content);
 	}
-	this->_totalread += buffer.length();
-	this->_bodyFile.write(buffer.c_str(), buffer.length());
-	if (this->_totalread >= this->_contentLength) 
+	if (buffer.length() > 0) {
+		this->_totalread += buffer.length();
+		write_select(this->_bodyFileFD, buffer, buffer.length());
+	}
+	if (this->_totalread >= this->_contentLength)
 	{
-		this->_bodyFile.close();
+		close(this->_bodyFileFD);
 		return true ;
 	}
 	return false;
 }
 
-void	Request::getChunkSize()
+bool	Request::getChunkSize()
 {
 	std::string number;
-	int	i = 0;
+	size_t	i = 0;
 	for (std::string::iterator it = _chunked.begin(); it != _chunked.end(); it++)
 	{
 		if (isHex((*it)) == false)
@@ -136,33 +147,51 @@ void	Request::getChunkSize()
 		number += *it;
 		i++;
 	}
+	if (this->_chunked.size() < i + 1 || (this->_chunked[i] != '\r' && this->_chunked[i + 1] != '\n')) {
+		this->_totalread = 0;
+		return false;
+	}
 	if (!number.empty())
 	{
 		std::istringstream(number) >> std::hex >> this->_totalread;
+		this->_chunked.erase(0, i);
 		if (this->_totalread != 0) {
-			if (this->_chunked[i] == '\r' && this->_chunked[i + 1] == '\n')
-				this->_chunked.erase(0, i + 2);
-			else
-				this->_chunked.erase(0, i);
+			if (this->_chunked.length() >= 2) {
+				if (this->_chunked[0] == '\r' && this->_chunked[1] == '\n')
+					this->_chunked.erase(0, 2);
+			}
+			else {
+				this->_CRLF = false;
+				return false;
+			}
 		}
 		else 
 			this->_chunked.erase(0, i + 4);
 	}
+	return true;
 }
 
-bool	Request::add_chunk(){
+bool	Request::add_chunk() {
 	if (this->_totalread > this->_chunked.length()) {
-		this->_bodyFile.write(this->_chunked.c_str(), this->_chunked.length());
+		write_select(this->_bodyFileFD, this->_chunked, this->_chunked.length());
 		this->_contentLength += this->_chunked.length();
 		this->_totalread -= this->_chunked.length();
 		this->_chunked.erase(0, this->_chunked.length());
 		return false;
 	}
 	else {
-		this->_bodyFile.write(this->_chunked.c_str(), this->_totalread);
+		write_select(this->_bodyFileFD, this->_chunked, this->_totalread);
 		this->_contentLength += this->_totalread;
-		this->_chunked.erase(0, this->_totalread + 2);
+		this->_chunked.erase(0, this->_totalread);
 		this->_totalread = 0;
+		if (this->_chunked.length() >= 2) {
+			if (this->_chunked[0] == '\r' && this->_chunked[1] == '\n')
+				this->_chunked.erase(0, 2);
+		}
+		else {
+			this->_CRLF = false;
+			return false;
+		}
 		return true;
 	}
 }
@@ -170,15 +199,22 @@ bool	Request::add_chunk(){
 bool		Request::read_chunked( std::string &buffer )
 {
 	this->_chunked += buffer;
+	if (this->_CRLF == false) {
+		if (this->_chunked.length() >= 2 && this->_chunked[0] == '\r' && this->_chunked[1] == '\n') {
+			this->_CRLF = true;
+			this->_chunked.erase(0, 2);
+		}
+	}
 	while (!this->_chunked.empty()) {
 		if (this->_totalread == 0) {
-			getChunkSize();
+			if (getChunkSize() == false)
+				return false;
 			if (this->_totalread != 0) {
 				if (add_chunk() == false)
 					return false;
 			}
 			else if (this->_chunked.empty()) {
-				this->_bodyFile.close();
+				close(this->_bodyFileFD);
 				return true;
 			}
 		}
@@ -217,17 +253,22 @@ void		Request::setVersion ( std::string &part ) {
 	if (part.length() > 0) {
 		this->_version = part;
 	}
-	else {
-		this->_error = true;
-	}
 }
 
 void		Request::setHost() {
 	for (std::vector< std::pair<std::string, std::string> >::iterator it = this->_headers.begin();
 	it != this->_headers.end(); it++) {
 		if (it->first == "Host") {
-			this->_host = it->second.substr(0, it->second.find(":"));
-			setPort(it->second.substr(it->second.find(":") + 1));
+			size_t found = it->second.find(":");
+			if (found != std::string::npos) {
+				this->_host = it->second.substr(0, it->second.find(":"));
+				setPort(it->second.substr(it->second.find(":") + 1));
+			}
+			else
+			{
+				this->_host = std::string(it->second);
+				setPort("");
+			}
 			break;
 		}
 	}
@@ -260,7 +301,7 @@ void		Request::setBodyfile ( std::string filename ) {
 	this->_bodyfilename = filename;
 }
 
-/* 
+/*
  *	Lexer to parser
  *  Convert The RequestLexer Class to Request Class
  * 	and extract all of the method, path, query string and version from rqstLine
@@ -319,16 +360,21 @@ size_t			&Request::getTotalread() {
 	return this->_totalread;
 }
 
-std::ostream & operator<<( std::ostream & o, Request & rqst ) {
-	o << "Request:" << "\n";
-	o << "Host: " << rqst.getHost() << ", Port: " << rqst.getPort() << "\n";
-	o << "Method: " << rqst.getMethod() << ", Path: " << rqst.getPath() << ", Version: " << rqst.getVersion() << "\n";
-	if (!rqst.getQueryString().empty()) {
-		o << "QuesryString: " << rqst.getQueryString() << "\n";
+size_t			&Request::getContentLength() {
+	return this->_contentLength;
+}
+
+time_t			&Request::getLastUpdate() {
+	return this->_last_update;
+}
+
+std::string	Request::getHeaders( std::string KEY)
+{
+	for (std::vector< std::pair<std::string, std::string> >::iterator it = _headers.begin();
+		it != _headers.end(); it++)
+	{
+		if (it->first.compare(KEY) == 0)
+			return it->second;
 	}
-	std::vector< std::pair<std::string, std::string> > headers = rqst.getHeaders();
-	for (std::vector< std::pair<std::string, std::string> >::iterator it = headers.begin(); it != headers.end(); it++) {
-		o << it->first << ", " << it->second << "\n";
-	}
-	return o;
+	return "";
 }
