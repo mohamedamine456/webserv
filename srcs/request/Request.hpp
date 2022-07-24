@@ -54,6 +54,7 @@ class Request {
 		int												_request_type;		// Reading Only
 		std::string										_chunked;
 		bool											_CRLF;
+		time_t											_created_at;
 		time_t											_last_update;
 
 		// private methods
@@ -97,7 +98,8 @@ class Request {
 		std::string										&getBodyfilename ();
 		size_t											&getTotalread();
 		size_t											&getContentLength();
-		time_t											&getLastUpdate();
+		time_t											getLastUpdate();
+		time_t											getCreatedAt();
 		std::string										getHeaders( std::string KEY);
 };
 

@@ -162,6 +162,9 @@ void	handle_clients_requests( ClientRequest &read_clients, ClientResponse &write
 				read_clients.erase(it);
 				it = tmpIt;
 			}
+			time_t nowtime;
+			time(&nowtime);
+			std::cout << "TIME: " << it->second.getLastUpdate() << ", NOW: " << nowtime << std::endl;
 		}
 	}
 }

@@ -8,7 +8,8 @@ Request::Request () {
 	this->_bodyFileFD = -1;
 	this->_fileOpened = false;
 	this->_CRLF = true;
-	this->_last_update = time(NULL);
+	time(&(this->_created_at));
+	time(&(this->_last_update));
 }
 
 Request::Request (const Request &rqst ) {
@@ -23,7 +24,8 @@ Request::~Request () {
 	this->_totalread = 0;
 	this->_fileOpened = false;
 	this->_CRLF = true;
-	this->_last_update = time(NULL);
+	this->_created_at = 0;
+	this->_last_update = 0;
 }
 
 Request	&Request::operator= ( const Request &rqst ) {
@@ -43,6 +45,7 @@ Request	&Request::operator= ( const Request &rqst ) {
 	this->_request_type = rqst._request_type;
 	this->_chunked = rqst._chunked;
 	this->_CRLF = rqst._CRLF;
+	this->_created_at = rqst._created_at;
 	this->_last_update = rqst._last_update;
 
 	return *this;
@@ -83,7 +86,7 @@ int		Request::add_buffer( int &recvLength, char *buffer ) {
 		else if (this->_request_type == LENGTH && this->_fileOpened == true) {
 			retVal = !read_content_length(bufferString);
 		}
-		this->_last_update = time(NULL);
+		time(&(this->_last_update));
 	}
 	if (bufferString.empty() && this->_request_type == NONE) {
 		retVal = FINISHED;
@@ -364,8 +367,12 @@ size_t			&Request::getContentLength() {
 	return this->_contentLength;
 }
 
-time_t			&Request::getLastUpdate() {
+time_t			Request::getLastUpdate() {
 	return this->_last_update;
+}
+
+time_t			Request::getCreatedAt() {
+	return this->_created_at;
 }
 
 std::string	Request::getHeaders( std::string KEY)
