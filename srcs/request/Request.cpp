@@ -47,7 +47,7 @@ Request	&Request::operator= ( const Request &rqst ) {
 	this->_CRLF = rqst._CRLF;
 	this->_created_at = rqst._created_at;
 	this->_last_update = rqst._last_update;
-
+	
 	return *this;
 }
 
@@ -87,7 +87,7 @@ int		Request::add_buffer( int &recvLength, char *buffer ) {
 			retVal = !read_content_length(bufferString);
 		}
 		time(&(this->_last_update));
-	}
+}
 	if (bufferString.empty() && this->_request_type == NONE) {
 		retVal = FINISHED;
 	}
@@ -367,15 +367,15 @@ size_t			&Request::getContentLength() {
 	return this->_contentLength;
 }
 
-time_t			Request::getLastUpdate() {
+time_t			&Request::getLastUpdate() {
 	return this->_last_update;
 }
 
-time_t			Request::getCreatedAt() {
+time_t			&Request::getCreatedAt() {
 	return this->_created_at;
 }
 
-std::string	Request::getHeaders( std::string KEY)
+std::string	Request::getHeaders( std::string KEY )
 {
 	for (std::vector< std::pair<std::string, std::string> >::iterator it = _headers.begin();
 		it != _headers.end(); it++)

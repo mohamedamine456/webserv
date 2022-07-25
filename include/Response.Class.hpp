@@ -64,7 +64,7 @@ private:
     size_t                      getAccessType(std::string PATH);
 
 public:
-    Response( std::string FLAG );
+    Response( std::string FLAG, std::vector<Server> SERV );
     Response( Request REQ, std::vector<Server> SERV );
     Response(Response const &src);
     Response    &operator=( const Response &src );

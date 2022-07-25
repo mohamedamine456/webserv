@@ -47,8 +47,9 @@ Response::Response( Request REQ, std::vector<Server> SERV )
         remove(this->_request.getBodyfilename().c_str());
 }
 
-Response::Response( std::string FLAG)
+Response::Response( std::string FLAG, std::vector<Server> SERV )
 {
+    this->_server = SERV;
     this->_responseBuffer = "";
     this->_serverIndex = 0;
     this->_cgiIndex = 0;

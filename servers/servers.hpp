@@ -4,7 +4,7 @@
 #include "Utils.hpp"
 #include "Client.hpp"
 
-#define TIMEOUT 30
+#define TIMEOUT 10
 
 /*
 ** SIZE TO READ FROM SOCKET: **************************************************************

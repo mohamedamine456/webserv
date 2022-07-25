@@ -98,8 +98,8 @@ class Request {
 		std::string										&getBodyfilename ();
 		size_t											&getTotalread();
 		size_t											&getContentLength();
-		time_t											getLastUpdate();
-		time_t											getCreatedAt();
+		time_t											&getLastUpdate();
+		time_t											&getCreatedAt();
 		std::string										getHeaders( std::string KEY);
 };
 

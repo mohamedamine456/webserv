@@ -150,21 +150,18 @@ void	handle_clients_requests( ClientRequest &read_clients, ClientResponse &write
 				}
 				else if (end_rqst == BAD_REQUEST) {
 					// ADD BAD REQUEST RESPONSE
-					write_clients.push_back(std::make_pair(it->first, Response(BAD_RQST)));
+					write_clients.push_back(std::make_pair(it->first, Response(BAD_RQST, servers)));
 					std::vector<std::pair<Client, Request> >::iterator tmpIt = it - 1;
 					read_clients.erase(it);
 					it = tmpIt;
 				}
 			}
-			else if (recvLength == -1){
+			else if (recvLength == -1) {
 				// remove it from the read list
 				std::vector<std::pair<Client, Request> >::iterator tmpIt = it - 1;
 				read_clients.erase(it);
 				it = tmpIt;
 			}
-			time_t nowtime;
-			time(&nowtime);
-			std::cout << "TIME: " << it->second.getLastUpdate() << ", NOW: " << nowtime << std::endl;
 		}
 	}
 }
@@ -197,7 +194,6 @@ void	handle_clients_responses(ClientResponse &write_clients, ClientRequest &read
 {
 	for (ClientResponse::iterator it = write_clients.begin(); it != write_clients.end(); it++)
 	{
-
 		if (FD_ISSET(it->first.getClientFd(), &backup_wset))
 		{
 
@@ -225,6 +221,7 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, fd_set 
 {
 	ClientRequest	read_clients;
 	ClientResponse	write_clients;
+	struct timeval	timeout = { 5, 0 };
 
 	// create another set bcs select is destroys the set feeded
 	fd_set	backup_rset, backup_wset;
@@ -240,11 +237,21 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, fd_set 
 		// add reading client socket file descriptors to rset
 		add_write_clients(write_clients, backup_wset, maxfd);
 		// feed fds to select only for read option
-		status = select(maxfd + 1, &backup_rset, &backup_wset, NULL, NULL);
+		status = select(maxfd + 1, &backup_rset, &backup_wset, NULL, &timeout);
 		// protection for select
 		if (status < 0)
 		{
 			std::cerr << "Select Failed!" << std::endl;
+		}
+		else if (status == 0) {
+			for (ClientRequest::iterator it = read_clients.begin(); it != read_clients.end(); it++) {
+				if (time(NULL) - it->second.getLastUpdate() > TIMEOUT) {
+					write_clients.push_back(std::make_pair(it->first, Response(REQUEST_TIMEOUT, servers)));
+					std::vector<std::pair<Client, Request> >::iterator tmpIt = it - 1;
+					read_clients.erase(it);
+					it = tmpIt;
+				}
+			}
 		}
 		// if the fd is between servers fds accept new connection
 		accept_connections(servers, read_clients, backup_rset);
