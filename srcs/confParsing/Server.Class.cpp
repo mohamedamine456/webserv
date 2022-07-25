@@ -41,6 +41,7 @@ Server      &Server::operator= ( const Server & src ) {
     this->_CGI = src._CGI;
     this->_client_max_body_size = src._client_max_body_size;
     this->_autoindex = src._autoindex;
+    this->_socketInfos = src._socketInfos;
     this->_redirections = src._redirections;
     this->_error_pages = src._error_pages;
     this->_upload_path = src._upload_path;

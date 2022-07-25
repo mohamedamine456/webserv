@@ -16,6 +16,7 @@ class SocketInfos {
 		struct sockaddr_in	socketAddress;
 	public:
 		SocketInfos();
+		SocketInfos &operator= (  const SocketInfos & src );
 		~SocketInfos();
 
 		int		createSocket ();

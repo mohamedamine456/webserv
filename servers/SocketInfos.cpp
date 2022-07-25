@@ -5,6 +5,12 @@ SocketInfos::SocketInfos() {
 	memset((char *)&(this->socketAddress), 0, sizeof(this->socketAddress));
 }
 
+SocketInfos &SocketInfos::operator= (  const SocketInfos & src ) {
+	this->socketFd = src.socketFd;
+	this->socketAddress = src.socketAddress;
+	return *this;
+}
+
 SocketInfos::~SocketInfos() {
 
 }
