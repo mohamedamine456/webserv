@@ -221,7 +221,7 @@ void	handle_all_servers( std::vector<Server> &servers, fd_set &read_fds, fd_set 
 {
 	ClientRequest	read_clients;
 	ClientResponse	write_clients;
-	struct timeval	timeout = { 5, 0 };
+	struct timeval	timeout = { 20, 0 };
 
 	// create another set bcs select is destroys the set feeded
 	fd_set	backup_rset, backup_wset;

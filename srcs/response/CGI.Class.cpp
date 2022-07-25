@@ -98,7 +98,11 @@ std::string CGI::header_to_envp(string_pair pair)
     std::string::iterator   it = pair.first.begin();
 
     for(; it != pair.first.end(); it++)
+    {
+        if (*it == '-')
+            *it = '_';
         env.push_back(std::toupper(*it));
+    }
     env.push_back('=');
     env.append(pair.second);
     return env;
@@ -149,7 +153,6 @@ void    CGI::set_envp(Request request, Response response)
 
 std::string    CGI::set_cgi_path( void )
 {
-
     if ((getAccessType(_cgi_path)) == S_IFREG)
         return OK;
     else if ((getAccessType(_cgi_path)) == NPOS) {

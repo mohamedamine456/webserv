@@ -81,10 +81,10 @@ private:
     std::vector<std::string>                            _methods;
     std::vector<Location>                               _location;
     std::vector<CGI>                                    _CGI;
-    std::string                                         _client_max_body_size;
+    std::string                                         _client_max_body_size; // 
     std::string                                         _autoindex;
     const std::string                                   _whoAmI;
-    SocketInfos					                        _socketInfos;
+    SocketInfos					                        _socketInfos; //
     std::vector<std::pair<std::string, std::string> >   _redirections;
     std::vector<std::pair<std::string, std::string> >   _error_pages;
     std::string                                         _upload_path;
