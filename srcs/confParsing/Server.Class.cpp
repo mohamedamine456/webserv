@@ -30,6 +30,11 @@ Server::Server( void ) :    _server_names(std::vector<std::string>()),
                             _upload_path("") {}
 Server::~Server(){}
 
+
+Server::Server( const Server &src): _whoAmI(src._whoAmI) {
+    *this = src;
+}
+
 Server      &Server::operator= ( const Server & src ) {
     this->_server_names = src._server_names;
     this->_host = src._host;

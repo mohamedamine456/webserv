@@ -100,6 +100,7 @@ public:
     }
 
     Server( void );
+    Server ( const Server &src );
     Server      &operator= ( const Server & srv );
     ~Server();
 

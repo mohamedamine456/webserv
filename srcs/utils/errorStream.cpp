@@ -14,7 +14,7 @@
 
 void    errorStream(std::string description, bool EXIT_FLAG, int value)
 {
-    std::cerr << KRED<< "Error: " << description << KNRM << std::endl;
+    std::cerr << KRED<< "Error: " << description << ", Status: " << value << KNRM << std::endl;
     if (EXIT_FLAG == true)
         exit(value);
 }

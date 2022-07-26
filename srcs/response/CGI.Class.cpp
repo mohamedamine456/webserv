@@ -258,10 +258,10 @@ std::string CGI::set_status( void )
     std::string                 status = "200 OK\r\n";
     size_t                      status_index = 0;
     size_t                      len;
-
+    // std::cout << "HEADERS_LENGTH: " << _header.length() << ", HEADERS: " << _header << std::endl;
     if (_header.length())
         status_index = this->_header.find("Status: ");
-    if (status_index != NPOS)
+    if (status_index != NPOS && _header != "")
     {
         len = this->_header.find("\r\n", 0);
         status = _header.substr(status_index + 8, len);
@@ -293,11 +293,12 @@ void        CGI::set_header(Response & response)
 
 void        CGI::fillResponseBuffer( Response & response )
 {
-    set_header(response);
-    response.get_responseBuffer().append(set_status());
-    response.get_responseBuffer().append(_FILEINLINE);
-    response.get_FULL_SIZE() += response.get_responseBuffer().length();
-    remove(_cgi_response_file.c_str());
+        set_header(response);
+        response.get_responseBuffer().append(set_status());
+        response.get_responseBuffer().append(_FILEINLINE);
+        response.get_FULL_SIZE() += response.get_responseBuffer().length();
+        remove(_cgi_response_file.c_str());
+    
 }
 
 size_t      CGI::getAccessType(std::string PATH) {

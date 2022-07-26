@@ -2,7 +2,7 @@
 import cgi
  
 #output http header:
-print ('Content-type: text/html')
+# print ('Content-type: text/html')
 print ('')
 # note the empty print above is required!
  
@@ -17,4 +17,5 @@ sport = theRequest.getfirst("sport", "undefined")
 print(" plays " + sport + " as Sport")
 year = theRequest.getfirst("year", "undefined")
 print("since " + year + "!")
+
 print ('</body></html>')
