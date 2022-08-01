@@ -17,7 +17,7 @@
 #include <iostream>
 #include <vector>
 
-class cgi;
+class CGIcgi;
 class location
 {
     

@@ -30,6 +30,7 @@ protected:
     std::string                     _cgi_response_file;
     std::string                     _status;
     std::string                     _header;
+    std::string                     _FILEINLINE;
     // std::string                  _name;
 public:
     CGI();
@@ -68,7 +69,7 @@ public:
     void                            set_cgi_name(std::string name);
     unsigned int                    get_cgi_methods_size();
     bool                            not_predefined(std::string &word) const;
-    cgi                             &operator=(cgi const & rhs);
+    CGI                             &operator=(CGI const & rhs);
 };
 
 
