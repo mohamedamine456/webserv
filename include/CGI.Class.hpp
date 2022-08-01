@@ -50,16 +50,16 @@ class CGI
         CGI( const CGI &src);
         CGI &operator=(const CGI &src);
 
-    // Getters:
-    std::string                 &get_extention( void );
-    std::string                 &get_cgi_response_file( void );
-    std::string                 &get_cgi_path( void );
-    std::vector<std::string>    &get_methods( void );
-    std::string                 get_script_name(Response response);
-    std::string                 get_path_info(Response response);
-    // Methods:
-    std::string                         execute_cgi(Request request, Response & response);
-    void                         fillResponseBuffer( Response & response );
+        // Getters:
+        std::string                 &get_extention( void );
+        std::string                 &get_cgi_response_file( void );
+        std::string                 &get_cgi_path( void );
+        std::vector<std::string>    &get_methods( void );
+        std::string                 get_script_name(Response response);
+        std::string                 get_path_info(Response response);
+        // Methods:
+        std::string                         execute_cgi(Request request, Response & response);
+        void                         fillResponseBuffer( Response & response );
 };
 
 

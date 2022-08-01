@@ -64,6 +64,8 @@
         "complex": "cpp",
         "optional": "cpp",
         "unordered_map": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "__tree": "cpp",
+        "map": "cpp"
     }
 }
