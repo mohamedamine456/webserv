@@ -21,24 +21,24 @@ int     main(int argc, char *argv[])
         servers = confParsing(DFLTCONF);
     else
         servers = confParsing(argv[1]);
-    // if (create_servers(servers) == -1)
-    // {
-    //     std::cerr << "Creation of servers Failed!" << std::endl;
-    //     return (EXIT_FAILURE);
-    // }
-    // // rfds store file descriptors of sockets to feed to select
-    // fd_set	rfds, wfds;
-    // // empty the writing set
-    // FD_ZERO(&wfds);
-    // // maxfd store last socket fd
-	// int maxfd = -1;
-    // // add all sockets to rfds to feed to select
-    // add_servers(servers, rfds, maxfd);
-    // /* select allows a program to monitor multiple file descriptors,
-    //    waiting until one or more of the file descriptors become "ready"
-    //    for some class of I/O operation 
-    // */
-    // // feed all sockets fds to select and wait for an I/O operation on one of the sockets 
-    // handle_all_servers(servers, rfds, wfds, maxfd);
+    if (create_servers(servers) == -1)
+    {
+        std::cerr << "Creation of servers Failed!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+    // rfds store file descriptors of sockets to feed to select
+    fd_set	rfds, wfds;
+    // empty the writing set
+    FD_ZERO(&wfds);
+    // maxfd store last socket fd
+	int maxfd = -1;
+    // add all sockets to rfds to feed to select
+    add_servers(servers, rfds, maxfd);
+    /* select allows a program to monitor multiple file descriptors,
+       waiting until one or more of the file descriptors become "ready"
+       for some class of I/O operation 
+    */
+    // feed all sockets fds to select and wait for an I/O operation on one of the sockets 
+    handle_all_servers(servers, rfds, wfds, maxfd);
     return (0);
 }

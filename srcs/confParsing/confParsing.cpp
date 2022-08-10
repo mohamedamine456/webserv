@@ -15,7 +15,7 @@
 /*
 ** PARSING : *******************************************************************
 */
-std::vector<Server>     getData(std::string FILE)
+std::vector<Server>     getData(std::string &FILE)
 {
     ServerData          data(POSITION_OUT);
     std::vector<Server> CONF;

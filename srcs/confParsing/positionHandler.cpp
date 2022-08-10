@@ -21,7 +21,6 @@ void    OUT_Position(std::string &FILE, std::string::iterator &it,
     }
     static int firstTime = 1;
     if (firstTime == 1) {
-        (void)vect;
         skipSpaces(FILE, it);
         if (it >= FILE.end()) {
             data.whereAmI = EOF;

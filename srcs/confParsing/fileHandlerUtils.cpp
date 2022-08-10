@@ -12,7 +12,7 @@
 
 #include "../../include/webserv.hpp"
 
-void skipSpaces(std::string FILE, std::string::iterator &it)
+void skipSpaces(std::string &FILE, std::string::iterator &it)
 {
     while (it < FILE.end()) {
         if (*it != ' ' && *it != '\t') {
@@ -22,7 +22,7 @@ void skipSpaces(std::string FILE, std::string::iterator &it)
     }
 }
 
-bool    isEmptyLine(std::string LINE)
+bool    isEmptyLine(std::string &LINE)
 {
     int i = -1;
 
@@ -38,7 +38,7 @@ bool    isEmptyLine(std::string LINE)
     return true;
 }
 
-void    nextChar(std::string FILE, std::string::iterator &it)
+void    nextChar(std::string &FILE, std::string::iterator &it)
 {
     while (it != FILE.end()) {
         if (*it != ' ' && *it != '\n' && *it != '\t')

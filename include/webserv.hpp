@@ -141,11 +141,11 @@ void    printServer(std::vector<Server> &server);
 */
 int                     validatedKeyword(std::string &FILE, std::string::iterator &it);
 int						read_select (int fd, std::string &buffer, size_t size);
-bool                    isEmptyLine(std::string LINE);
+bool                    isEmptyLine(std::string &LINE);
 void                    OUT_Position(std::string &FILE, std::string::iterator &it, std::vector<Server> &vect, ServerData &data);
 void                    SERVER_Position(std::string &FILE, std::string::iterator &it, std::vector<Server> &vect, ServerData &data);
-void                    skipSpaces(std::string FILE, std::string::iterator &it);
-void                    nextChar(std::string FILE, std::string::iterator &it);
+void                    skipSpaces(std::string &FILE, std::string::iterator &it);
+void                    nextChar(std::string &FILE, std::string::iterator &it);
 void                    fill_server_name(std::string &FILE, std::string::iterator &it, std::vector<Server> &vect, ServerData &data);
 void                    fill_host_port(std::string &FILE, std::string::iterator &it, std::vector<Server> &vect, ServerData &data);
 void                    fill_index(std::string &FILE, std::string::iterator &it, std::vector<Server> &vect, ServerData &data);
